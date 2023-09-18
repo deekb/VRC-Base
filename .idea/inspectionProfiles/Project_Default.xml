@@ -5,6 +5,7 @@
       <option name="ignoredErrors">
         <list>
           <option value="E501" />
+          <option value="E402" />
         </list>
       </option>
     </inspection_tool>
@@ -16,6 +17,5 @@
       </option>
     </inspection_tool>
     <inspection_tool class="PyShadowingNamesInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
-    <inspection_tool class="PyUnusedLocalInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
   </profile>
 </component>
