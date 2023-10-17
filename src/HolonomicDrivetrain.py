@@ -227,17 +227,13 @@ class Drivetrain:
             self.print("move_with_controller: delta_time > 100ms")
             delta_time = 0
 
-        left_stick = Point(
-            controller.axis4.position() * 0.01, controller.axis3.position() * 0.01
-        )
-        right_stick = Point(
-            controller.axis1.position() * 0.01, controller.axis1.position() * 0.01
-        )
+        left_stick = (controller.axis4.position() * 0.01, controller.axis3.position() * 0.01)
+        right_stick = (controller.axis1.position() * 0.01, controller.axis1.position() * 0.01)
 
-        movement_direction = math.atan2(left_stick.y, left_stick.x)
+        movement_direction = math.atan2(left_stick[1], left_stick[0])
 
         # Normalize the turning amount across a cubic curve
-        normalized_right_x = cubic_filter(right_stick.x, Constants.turn_cubic_linearity)
+        normalized_right_x = cubic_filter(right_stick[0], Constants.turn_cubic_linearity)
 
         if PID_turning:
             # The line below uses -= because the PID direction is in positive counterclockwise
@@ -245,7 +241,7 @@ class Drivetrain:
                 normalized_right_x * Constants.driver_control_turn_speed_rad_per_second
             ) * delta_time
 
-        magnitude = hypotenuse(left_stick.x, left_stick.y)
+        magnitude = hypotenuse(left_stick[0], left_stick[1])
 
         if headless:
             if PID_turning:
