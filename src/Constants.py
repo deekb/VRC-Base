@@ -1,16 +1,15 @@
+from vex import Ports, GearSetting, FontType
 from math import pi
 
-from vex import Ports, GearSetting, FontType
 
-
-class ControllerAxis(object):
+class ControllerAxis:
     """A class for defining controller axis constants."""
 
     x_axis = 0
     y_axis = 1
 
 
-class Team(object):
+class Team:
     """A class for defining the different teams"""
 
     red = 0
@@ -18,7 +17,7 @@ class Team(object):
     skills = 2
 
 
-class DrivetrainType(object):
+class DrivetrainType:
     """A class for defining the different types of drivetrains"""
 
     Tank = 0
@@ -84,10 +83,10 @@ drivetrain_slip_coefficients = {pi * 0:    0,
                                 pi * 0.75: 0,
                                 pi * 0.5:  0,
                                 pi * 0.25: 0}
-wheel_1_direction_rad = pi / 4
-wheel_2_direction_rad = pi / 4 + pi / 2
-wheel_3_direction_rad = pi / 4
-wheel_4_direction_rad = pi / 4 + pi / 2
+front_left_wheel_rotation_rad = pi / 4
+front_right_wheel_rotation_rad = pi / 4 + pi / 2
+rear_right_wheel_rotation_rad = pi / 4
+rear_left_wheel_rotation_rad = pi / 4 + pi / 2
 
 # For tuning the rotation PID gains, please refer to the "Tuning a PID controller" section of Utilities.md
 drivetrain_turn_Kp = 1.75 * 0.4

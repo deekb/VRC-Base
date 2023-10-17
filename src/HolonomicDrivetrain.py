@@ -27,32 +27,33 @@ class Drivetrain:
         else:
             self.print, self.clear = lambda *args, **kwargs: None
 
-        self._motor_1 = Motor(
+        self._front_left_motor = Motor(
             Constants.motor_1_port,
             Constants.motor_1_gear_ratio,
             Constants.motor_1_inverted,
         )
-        self._motor_2 = Motor(
+        self._front_right_motor = Motor(
             Constants.motor_2_port,
             Constants.motor_2_gear_ratio,
             Constants.motor_2_inverted,
         )
-        self._motor_3 = Motor(
+        self._rear_right_motor = Motor(
             Constants.motor_3_port,
             Constants.motor_3_gear_ratio,
             Constants.motor_3_inverted,
         )
-        self._motor_4 = Motor(
+        self._rear_left_motor = Motor(
             Constants.motor_4_port,
             Constants.motor_4_gear_ratio,
             Constants.motor_4_inverted,
         )
         self._inertial = Inertial(Constants.inertial_sensor_port)
 
-        self._wheel_1_rotation_rad = Constants.wheel_1_direction_rad
-        self._wheel_2_rotation_rad = Constants.wheel_2_direction_rad
-        self._wheel_3_rotation_rad = Constants.wheel_3_direction_rad
-        self._wheel_4_rotation_rad = Constants.wheel_4_direction_rad
+        self._front_left_wheel_rotation_rad = Constants.front_left_wheel_rotation_rad
+        self._front_right_wheel_rotation_rad = Constants.front_right_wheel_rotation_rad
+        self._rear_right_wheel_rotation_rad = Constants.rear_right_wheel_rotation_rad
+        self._rear_left_wheel_rotation_rad = Constants.rear_left_wheel_rotation_rad
+
         self._movement_allowed_error = Constants.drivetrain_allowed_positional_error_cm
         self._wheel_circumference_cm = Constants.wheel_circumference_cm
         self._driver_control_deadzone = Constants.driver_control_deadzone
@@ -71,20 +72,22 @@ class Drivetrain:
         self._current_target_y_cm = 0
         self._last_move_with_controller_execution_time = None
         self._current_move_with_controller_execution_time = None
-        self._motor_1.set_velocity(0, PERCENT)
-        self._motor_2.set_velocity(0, PERCENT)
-        self._motor_3.set_velocity(0, PERCENT)
-        self._motor_4.set_velocity(0, PERCENT)
-        self._motor_1.spin(FORWARD)
-        self._motor_2.spin(FORWARD)
-        self._motor_3.spin(FORWARD)
-        self._motor_4.spin(FORWARD)
+
+        self._front_left_motor.set_velocity(0, PERCENT)
+        self._front_right_motor.set_velocity(0, PERCENT)
+        self._rear_right_motor.set_velocity(0, PERCENT)
+        self._rear_left_motor.set_velocity(0, PERCENT)
+
+        self._front_left_motor.spin(FORWARD)
+        self._front_right_motor.spin(FORWARD)
+        self._rear_right_motor.spin(FORWARD)
+        self._rear_left_motor.spin(FORWARD)
 
         self.odometry = Odometry(
-            self._motor_1,
-            self._motor_2,
-            self._motor_3,
-            self._motor_4,
+            self._front_left_motor,
+            self._front_right_motor,
+            self._rear_right_motor,
+            self._rear_left_motor,
             timer=self.timer,
             inertial=self._inertial,
             terminal=self.terminal,
@@ -135,33 +138,33 @@ class Drivetrain:
         if spin is None:
             spin = self._rotation_PID_output
         speed = clamp(speed, 0, 1)
-        self._motor_1.set_velocity(
+        self._front_left_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._wheel_1_rotation_rad)
+                calculate_wheel_power(direction, speed, self._front_left_wheel_rotation_rad)
                 - (-spin if Constants.motor_1_inverted else spin)
             )
             * 100,
             PERCENT,
         )
-        self._motor_2.set_velocity(
+        self._front_right_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._wheel_2_rotation_rad)
+                calculate_wheel_power(direction, speed, self._front_right_wheel_rotation_rad)
                 - (-spin if Constants.motor_2_inverted else spin)
             )
             * 100,
             PERCENT,
         )
-        self._motor_3.set_velocity(
+        self._rear_right_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._wheel_3_rotation_rad)
+                calculate_wheel_power(direction, speed, self._rear_right_wheel_rotation_rad)
                 - (-spin if Constants.motor_3_inverted else spin)
             )
             * 100,
             PERCENT,
         )
-        self._motor_4.set_velocity(
+        self._rear_left_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._wheel_4_rotation_rad)
+                calculate_wheel_power(direction, speed, self._rear_left_wheel_rotation_rad)
                 - (-spin if Constants.motor_4_inverted else spin)
             )
             * 100,
@@ -267,14 +270,14 @@ class Drivetrain:
         """
         Reset all the drivetrain to its newly instantiated state
         """
-        self._motor_1.set_velocity(0, PERCENT)
-        self._motor_2.set_velocity(0, PERCENT)
-        self._motor_3.set_velocity(0, PERCENT)
-        self._motor_4.set_velocity(0, PERCENT)
-        self._motor_1.spin(FORWARD)
-        self._motor_2.spin(FORWARD)
-        self._motor_3.spin(FORWARD)
-        self._motor_4.spin(FORWARD)
+        self._front_left_motor.set_velocity(0, PERCENT)
+        self._front_right_motor.set_velocity(0, PERCENT)
+        self._rear_right_motor.set_velocity(0, PERCENT)
+        self._rear_left_motor.set_velocity(0, PERCENT)
+        self._front_left_motor.spin(FORWARD)
+        self._front_right_motor.spin(FORWARD)
+        self._rear_right_motor.spin(FORWARD)
+        self._rear_left_motor.spin(FORWARD)
         if self._inertial:
             self._inertial.set_heading(0, DEGREES)
         self._rotation_PID_output = 0
@@ -336,12 +339,12 @@ class Drivetrain:
 
     def set_braking(self, braking):
         if braking:
-            self._motor_1.set_stopping(BRAKE)
-            self._motor_2.set_stopping(BRAKE)
-            self._motor_3.set_stopping(BRAKE)
-            self._motor_4.set_stopping(BRAKE)
+            self._front_left_motor.set_stopping(BRAKE)
+            self._front_right_motor.set_stopping(BRAKE)
+            self._rear_right_motor.set_stopping(BRAKE)
+            self._rear_left_motor.set_stopping(BRAKE)
         else:
-            self._motor_1.set_stopping(COAST)
-            self._motor_2.set_stopping(COAST)
-            self._motor_3.set_stopping(COAST)
-            self._motor_4.set_stopping(COAST)
+            self._front_left_motor.set_stopping(COAST)
+            self._front_right_motor.set_stopping(COAST)
+            self._rear_right_motor.set_stopping(COAST)
+            self._rear_left_motor.set_stopping(COAST)
