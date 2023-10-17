@@ -1,12 +1,11 @@
 from HolonomicOdometry import Odometry
 from Utilities import *
-import Constants
 
 x_axis = Constants.ControllerAxis.x_axis
 y_axis = Constants.ControllerAxis.y_axis
 
 
-class Drivetrain(object):
+class Drivetrain:
     """
     A drivetrain controller for a holonomic drive base
     """
@@ -90,8 +89,6 @@ class Drivetrain(object):
             inertial=self._inertial,
             terminal=self.terminal,
         )
-
-        Thread(self._direction_pid_auto_update)
 
     def calibrate_inertial_sensor(self):
         self._inertial.calibrate()
@@ -265,16 +262,10 @@ class Drivetrain(object):
             self._current_move_with_controller_execution_time
         )
 
-    def _direction_pid_update(self):
+    def update_direction_PID(self):
         self._rotation_PID_output = self._rotation_PID.update(
             self.odometry.rotation_rad
         )
-
-    def _direction_pid_auto_update(self):
-        while True:
-            if self.auto_update_PID:
-                self._direction_pid_update()
-            wait(10, MSEC)
 
     def reset(self) -> None:
         """

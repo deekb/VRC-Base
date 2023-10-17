@@ -3,7 +3,7 @@
   <component name="Black">
     <option name="enabledOnReformat" value="true" />
     <option name="pathToExecutable" value="$USER_HOME$/.local/bin/black" />
-    <option name="sdkUUID" value="705121ec-bdd9-4052-8020-4803299c92bc" />
+    <option name="sdkName" value="Python 3.10" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10" project-jdk-type="Python SDK" />
 </project>

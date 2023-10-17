@@ -25,7 +25,7 @@ class Terminal(object):
 
         Args:
             text: the text to print to the screen
-        :param end: The string to print at the end (defaults to new line)
+            end: The string to print at the end (defaults to new line)
         """
 
         self.brain.screen.set_font(Constants.font_size)

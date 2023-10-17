@@ -1,10 +1,14 @@
-from vex import *
 import Constants
+from vex import *
 
 
 class Intake:
     def __init__(self, brain):
-        self.wrist_motor = Motor(Constants.wrist_motor_port, Constants.wrist_motor_gear_ratio, Constants.wrist_motor_inverted)
+        self.wrist_motor = Motor(
+            Constants.wrist_motor_port,
+            Constants.wrist_motor_gear_ratio,
+            Constants.wrist_motor_inverted,
+        )
         self.claw_pneumatic_solenoid = DigitalOut(brain.three_wire_port.a)
 
         self.wrist_motor.stop()
@@ -52,4 +56,3 @@ class Intake:
             elif self.claw_state == Constants.ClawState.closed:
                 self.claw_pneumatic_solenoid.set(True)
             wait(100, MSEC)
-

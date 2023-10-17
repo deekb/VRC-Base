@@ -1,5 +1,6 @@
-from vex import Ports, GearSetting, FontType
 from math import pi
+
+from vex import Ports, GearSetting, FontType
 
 
 class ControllerAxis(object):
@@ -58,75 +59,23 @@ right_claw_motor_port = Ports.PORT9
 right_claw_motor_gear_ratio = GearSetting.RATIO_18_1
 right_claw_motor_inverted = True
 
-
-"""3773K Bowbots Potassium"""
-# drivetrain_type = DrivetrainType.Mecanum
-# wheel_radius_cm = 5.23875
-# motor_1_port = Ports.PORT11
-# motor_2_port = Ports.PORT20
-# motor_3_port = Ports.PORT19
-# motor_4_port = Ports.PORT12
-# motor_1_gear_ratio = GearSetting.RATIO_18_1
-# motor_2_gear_ratio = GearSetting.RATIO_18_1
-# motor_3_gear_ratio = GearSetting.RATIO_18_1
-# motor_4_gear_ratio = GearSetting.RATIO_18_1
-# motor_1_inverted = False
-# motor_2_inverted = True
-# motor_3_inverted = True
-# motor_4_inverted = False
-# encode_ticks_per_rotation = 360  # Green: 360
-# drivetrain_rotation_offset = -pi / 4
-# wheel_1_direction_rad = pi / 4
-# wheel_2_direction_rad = pi / 4 + pi / 2
-# wheel_3_direction_rad = pi / 4
-# wheel_4_direction_rad = pi / 4 + pi / 2
-# # For tuning the rotation PID gains, please refer to the "Tuning a PID controller" section of Utilities.md
-# drivetrain_turn_Kp = 1.75 * 0.4
-# drivetrain_turn_Ki = 0
-# drivetrain_turn_Kd = 0
-
-
-"""3773P Bowbots Phosphorus test bot"""
-# wheel_radius_cm = 4.13
-# motor_1_port = Ports.PORT1
-# motor_2_port = Ports.PORT2
-# motor_3_port = Ports.PORT3
-# motor_4_port = Ports.PORT4
-# motor_1_gear_ratio = GearSetting.RATIO_18_1
-# motor_2_gear_ratio = GearSetting.RATIO_18_1
-# motor_3_gear_ratio = GearSetting.RATIO_18_1
-# motor_4_gear_ratio = GearSetting.RATIO_18_1
-# motor_1_inverted = False
-# motor_2_inverted = False
-# motor_3_inverted = False
-# motor_4_inverted = False
-# encode_ticks_per_rotation = 360  # Green: 360
-# drivetrain_rotation_offset = -pi / 4
-# wheel_1_direction_rad = 0
-# wheel_2_direction_rad = -pi * 0.5
-# wheel_3_direction_rad = -pi
-# wheel_4_direction_rad = -pi * 1.5
-# # For tuning the rotation PID gains, please refer to the "Tuning a PID controller" section of Utilities.md
-# drivetrain_turn_Kp = 0.9 * 0.4
-# drivetrain_turn_Ki = 0
-# drivetrain_turn_Kd = 0
-
-"""3773P Bowbots Phosphorus"""
-wheel_radius_cm = 4.13
+"""Drivetrain Constants"""
+drivetrain_type = DrivetrainType.Mecanum
+wheel_radius_cm = 5.23875
 motor_1_port = Ports.PORT1
-motor_2_port = Ports.PORT2
-motor_3_port = Ports.PORT3
-motor_4_port = Ports.PORT4
+motor_2_port = Ports.PORT10
+motor_3_port = Ports.PORT20
+motor_4_port = Ports.PORT11
 motor_1_gear_ratio = GearSetting.RATIO_18_1
 motor_2_gear_ratio = GearSetting.RATIO_18_1
 motor_3_gear_ratio = GearSetting.RATIO_18_1
 motor_4_gear_ratio = GearSetting.RATIO_18_1
 motor_1_inverted = False
-motor_2_inverted = False
-motor_3_inverted = False
+motor_2_inverted = True
+motor_3_inverted = True
 motor_4_inverted = False
 encoder_ticks_per_rotation = 360  # Green: 360
-drivetrain_rotation_offset = -pi / 4
+drivetrain_rotation_offset = 0
 drivetrain_slip_coefficients = {pi * 0:    0,
                                 pi * -0.25: 0,
                                 pi * -0.5:  0,
@@ -134,13 +83,14 @@ drivetrain_slip_coefficients = {pi * 0:    0,
                                 pi * 1:    0,
                                 pi * 0.75: 0,
                                 pi * 0.5:  0,
-                                pi * 0.25: 0,}
-wheel_1_direction_rad = pi * 0.25
-wheel_2_direction_rad = -pi * 0.25
-wheel_3_direction_rad = -pi * 0.75
-wheel_4_direction_rad = pi * 0.75
+                                pi * 0.25: 0}
+wheel_1_direction_rad = pi / 4
+wheel_2_direction_rad = pi / 4 + pi / 2
+wheel_3_direction_rad = pi / 4
+wheel_4_direction_rad = pi / 4 + pi / 2
+
 # For tuning the rotation PID gains, please refer to the "Tuning a PID controller" section of Utilities.md
-drivetrain_turn_Kp = 0.9 * 0.4
+drivetrain_turn_Kp = 1.75 * 0.4
 drivetrain_turn_Ki = 0
 drivetrain_turn_Kd = 0
 
@@ -199,7 +149,7 @@ log_directory = "/logs/"
 deploy_directory = "/deploy/"
 
 
-# These constants can be used on their own or can be "ored" together
+# These constants can be used on their own or can be "binary or-ed" together
 # for example (top | right) would be 9, the unique value for top right
 # each combination of these values has a unique value 1-15
 top = 1

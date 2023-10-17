@@ -1,20 +1,22 @@
 import ast
-from glob import glob
 import hashlib
-import shutil
 import os
+import shutil
 import subprocess
+from glob import glob
 
 ON_WINDOWS = False
 ON_UNIX = False
 if os.name == "nt":
     # Windows specific imports and setup
     ON_WINDOWS = True
+    # noinspection PyUnresolvedReferences
     import win32api
     import psutil
 elif os.name == "posix":
     # Unix specific imports and setup
     ON_UNIX = True
+
 
 SRC_DIRECTORY = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"
@@ -23,7 +25,10 @@ DEPLOY_DIRECTORY = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "deploy"
 )
 
-DEPLOY_EXCLUDE = lambda x: x.endswith(".svg") or x.endswith("~")
+
+def exclude_from_deploy(filename):
+    return filename.endswith(".svg") or filename.endswith("~")
+
 
 MAIN_PROGRAM = os.path.join(SRC_DIRECTORY, "main.py")
 
@@ -63,12 +68,19 @@ VEX_BUILTIN_MODULES = [
 ]
 
 
+def mount_drive(drive_path):
+    if ON_WINDOWS:
+        pass
+    elif ON_UNIX:
+        subprocess.run(["mount", drive_path], check=True)
+
+
 def unmount_drive(drive_path):
     if ON_WINDOWS:
         eject_command = (
             "powershell $driveEject = New-Object -comObject Shell.Application;"
         )
-        eject_command += f'$driveEject.Namespace(17).ParseName("""{drive_path}""").InvokeVerb("""Eject""")'
+        eject_command += f"$driveEject.Namespace(17).ParseName(\"\"\"{drive_path}\"\"\").InvokeVerb(\"\"\"Eject\"\"\")"
         subprocess.run(eject_command, check=True)
     elif ON_UNIX:
         subprocess.run(["umount", drive_path], check=True)
@@ -131,43 +143,26 @@ def detect_dependencies(file_path, available_libraries, visited=None):
     imported_modules = set()
 
     for node in ast.walk(tree):
+        module_names = []
         if isinstance(node, ast.Import):
-            # If the parser finds "import module_name" or "import module_name as other_name"
-            # Ensure that the import is not a builtin
-            for name in node.names:
-                if name.name not in visited and name.name not in VEX_BUILTIN_MODULES:
-                    # Add the module to the visited set
-                    visited.add(name.name)
-                    # Add the module to the imported set
-                    imported_modules.add(name.name)
-                    # Ensure the imported module exists in
-                    if name.name not in available_libraries:
-                        raise ModuleNotFoundError(
-                            f'File {file_path} references module "{name.name}" but, it could not be found in {SRC_DIRECTORY}'
-                        )
-                    # Recurse until no additional modules can be found
-                    imported_modules.update(
-                        detect_dependencies(
-                            available_libraries[name.name], available_libraries, visited
-                        )
-                    )
+            module_names = [name.name for name in node.names]
         elif isinstance(node, ast.ImportFrom):
-            # If the parser finds "from module_name import object_name" or "from module_name import object_name as other_name"
-            # Ensure that the import is not a builtin
-            if node.module not in visited and node.module not in VEX_BUILTIN_MODULES:
+            module_names = [node.module]
+        for module in module_names:
+            if module not in visited and module not in VEX_BUILTIN_MODULES:
                 # Add the module to the visited set
-                visited.add(node.module)
+                visited.add(module)
                 # Add the module to the imported set
-                imported_modules.add(node.module)
+                imported_modules.add(module)
                 # Ensure the imported module exists in
-                if node.module not in available_libraries:
+                if module not in available_libraries:
                     raise ModuleNotFoundError(
-                        f'File {file_path} references module "{node.module}" but, it could not be found in {SRC_DIRECTORY}'
+                        f"File {file_path} references module \"{module}\" but, it could not be found in {SRC_DIRECTORY}"
                     )
                 # Recurse until no additional modules can be found
                 imported_modules.update(
                     detect_dependencies(
-                        available_libraries[node.module], available_libraries, visited
+                        available_libraries[module], available_libraries, visited
                     )
                 )
 
@@ -226,13 +221,13 @@ def main():
         if library in available_libraries:
             libraries_to_copy[library] = available_libraries[library]
         else:
-            raise ModuleNotFoundError(f'Couldn\'t find library "{library}"')
+            raise ModuleNotFoundError(f"Couldn't find library \"{library}\"")
 
     deploy_objects = []
 
     for dependency in glob(DEPLOY_DIRECTORY + "/**", recursive=True):
         if os.path.isfile(dependency):
-            if not DEPLOY_EXCLUDE(dependency):
+            if not exclude_from_deploy(dependency):
                 deploy_objects.append(os.path.join(DEPLOY_DIRECTORY, dependency))
 
     # Copy all source files (main.py and it's dependencies) into the root directory

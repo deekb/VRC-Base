@@ -93,6 +93,32 @@ class Distance:
 
 # noinspection PyUnusedLocal
 # noinspection PyPep8Naming
+class Optical:
+    def __init__(self, port):
+        pass
+
+    def set_light_power(self, value, unit):
+        pass
+
+    def hue(self):
+        pass
+
+    def is_near_object(self):
+        pass
+
+
+# noinspection PyUnusedLocal
+# noinspection PyPep8Naming
+class DigitalOut:
+    def __init__(self, port):
+        pass
+
+    def set(self, state: bool):
+        pass
+
+
+# noinspection PyUnusedLocal
+# noinspection PyPep8Naming
 class ControllerButton:
     def __init__(self):
         pass

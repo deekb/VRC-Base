@@ -13,13 +13,13 @@ The project homepage and archive can be found on GitHub at the provided links.
 For more information about the project, you can contact Derek Baier at the given email address.
 """
 
-from vex import *
 import Constants
-from Utilities import Terminal, Logging, BinarySemaphore
-from HolonomicDrivetrain import Drivetrain
 from Autonomous import NothingAutonomous
+from HolonomicDrivetrain import Drivetrain
 from Intake import Intake
 from SetupUI import SetupUI
+from Utilities import Terminal, Logging, BinarySemaphore
+from vex import *
 
 __title__ = Constants.__title__
 __description__ = Constants.__description__
@@ -98,8 +98,11 @@ class Robot:
         while True:
             self.drivetrain_thread_lock.acquire()  # Ensure this thread is allowed to use the drivetrain
             self.drivetrain.move_with_controller(
-                self.primary_controller, headless=Constants.driver_control_headless, PID_turning=Constants.PID_turning
+                self.primary_controller,
+                headless=Constants.driver_control_headless,
+                PID_turning=Constants.PID_turning,
             )
+            self.drivetrain.update_direction_PID()
             self.drivetrain_thread_lock.release()  # Allow other threads that are waiting to acquire the drivetrain to do so
             # self.triball_detected = self.check_triball_detected()
             # if (

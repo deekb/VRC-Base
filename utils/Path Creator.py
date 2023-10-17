@@ -100,8 +100,7 @@ def add_point_on_line(x, y):
     insert_index = None
 
     for i in range(len(x_points) - 1):
-        t_vals = np.linspace(i, i + 1, 100)
-        xy_vals = cs(t_vals)
+        xy_vals = [(x, y)]
         for px, py in xy_vals:
             distance = np.sqrt((x - px) ** 2 + (y - py) ** 2)
             if distance < min_distance:
