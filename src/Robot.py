@@ -54,7 +54,7 @@ class Robot:
 
         self.drivetrain = Drivetrain(timer=self.brain.timer, terminal=self.terminal)
 
-        self.intake = Intake(self.brain)
+        self.intake = Intake()
 
         self.drivetrain.odometry.position = Constants.robot_start_position
         self.drivetrain.odometry.rotation_deg = Constants.robot_start_rotation_deg
@@ -215,6 +215,7 @@ class Robot:
         self.print("Stopped all driver control tasks")
 
     def setup_controller_bindings(self):
+        ...
         # self.primary_controller.buttonL1.pressed(
         #     lambda: setattr(self.drivetrain, "target_heading_deg", 0)
         # )
@@ -227,7 +228,6 @@ class Robot:
         # self.primary_controller.buttonR2.pressed(
         #     lambda: setattr(self.drivetrain, "target_heading_deg", 270)
         # )
-
 
     def main(self):
         setup_ui = SetupUI(self.terminal, self.brain.screen)

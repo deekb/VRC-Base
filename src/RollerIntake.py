@@ -3,7 +3,7 @@ from vex import *
 
 
 class Intake:
-    def __init__(self, brain):
+    def __init__(self):
         self.left_intake_motor = Motor(
             Constants.left_intake_motor_port,
             Constants.left_intake_motor_gear_ratio,
