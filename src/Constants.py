@@ -1,6 +1,16 @@
 from vex import Ports, GearSetting, FontType
 from math import pi
 
+__title__ = "Vex V5 2023 Competition code"
+__description__ = "Competition Code for VRC: Over-Under 2023-2024"
+__team__ = "3773P (Bowbots Phosphorus)"
+__url__ = "https://github.com/deekb/VRC-OverUnder"
+__download_url__ = "https://github.com/deekb/VRC-OverUnder/archive/master.zip"
+__version__ = "Working"
+__author__ = "Derek Baier"
+__author_email__ = "Derek.m.baier@gmail.com"
+__license__ = "MIT"
+
 
 class ControllerAxis:
     """A class for defining controller axis constants."""
@@ -39,24 +49,27 @@ class WristState:
     down = 1
 
 
+class IntakeState:
+    """A class for defining the different states of a roller-ed intake"""
+
+    off = 0
+    pull_in = 1
+    push_out = 2
+
+
 """Sensors"""
 inertial_sensor_port = Ports.PORT5
-optical_sensor_port = Ports.PORT10
-distance_sensor_port = Ports.PORT11
 
 
 """Intake"""
-wrist_motor_port = Ports.PORT7
-wrist_motor_gear_ratio = GearSetting.RATIO_18_1
-wrist_motor_inverted = False
+left_intake_motor_port = Ports.PORT21
+left_intake_motor_gear_ratio = GearSetting.RATIO_18_1
+left_intake_motor_inverted = False
 
-left_claw_motor_port = Ports.PORT8
-left_claw_motor_gear_ratio = GearSetting.RATIO_18_1
-left_claw_motor_inverted = False
+right_intake_motor_port = Ports.PORT21
+right_intake_motor_gear_ratio = GearSetting.RATIO_18_1
+right_intake_motor_inverted = False
 
-right_claw_motor_port = Ports.PORT9
-right_claw_motor_gear_ratio = GearSetting.RATIO_18_1
-right_claw_motor_inverted = True
 
 """Drivetrain Constants"""
 drivetrain_type = DrivetrainType.Mecanum
@@ -69,20 +82,22 @@ motor_1_gear_ratio = GearSetting.RATIO_18_1
 motor_2_gear_ratio = GearSetting.RATIO_18_1
 motor_3_gear_ratio = GearSetting.RATIO_18_1
 motor_4_gear_ratio = GearSetting.RATIO_18_1
-motor_1_inverted = False
-motor_2_inverted = True
-motor_3_inverted = True
-motor_4_inverted = False
+front_left_motor_inverted = False
+front_right_motor_inverted = True
+rear_right_motor_inverted = True
+rear_left_motor_inverted = False
 encoder_ticks_per_rotation = 360  # Green: 360
 drivetrain_rotation_offset = 0
-drivetrain_slip_coefficients = {pi * 0:    0,
-                                pi * -0.25: 0,
-                                pi * -0.5:  0,
-                                pi * -0.75: 0,
-                                pi * 1:    0,
-                                pi * 0.75: 0,
-                                pi * 0.5:  0,
-                                pi * 0.25: 0}
+drivetrain_slip_coefficients = {
+    pi * 0: 0,
+    pi * -0.25: 0.9239,
+    pi * -0.5: 0.7071,
+    pi * -0.75: 0.9239,
+    pi * 1: 0,
+    pi * 0.75: 0.9239,
+    pi * 0.5: 0.7071,
+    pi * 0.25: 0.9239,
+}
 front_left_wheel_rotation_rad = pi / 4
 front_right_wheel_rotation_rad = pi / 4 + pi / 2
 rear_right_wheel_rotation_rad = pi / 4
@@ -156,12 +171,4 @@ bottom = 2
 left = 4
 right = 8
 
-__title__ = "Vex V5 2023 Competition code"
-__description__ = "Competition Code for VRC: Over-Under 2023-2024"
-__team__ = "3773P (Bowbots Phosphorus)"
-__url__ = "https://github.com/deekb/VRC-OverUnder"
-__download_url__ = "https://github.com/deekb/VRC-OverUnder/archive/master.zip"
-__version__ = "Working"
-__author__ = "Derek Baier"
-__author_email__ = "Derek.m.baier@gmail.com"
-__license__ = "MIT"
+
