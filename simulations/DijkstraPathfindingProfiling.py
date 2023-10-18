@@ -1,6 +1,7 @@
 import time
 import os
 import sys
+
 src_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"
 )
@@ -12,6 +13,7 @@ from Dijkstra_HeapQ import Dijkstra
 MAX_FPS = 60
 DISPLAY_SCALING_FACTOR = 8
 FIELD_SIZE = (122, 122)
+
 
 def get_path(start_position, target_position):
     with open(os.path.join(os.pardir, os.pardir, "available_positions.txt"), "r") as f:
