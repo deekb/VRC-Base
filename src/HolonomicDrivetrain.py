@@ -1,4 +1,6 @@
 from HolonomicOdometry import Odometry
+import Constants
+import math
 from Utilities import *
 
 x_axis = Constants.ControllerAxis.x_axis
@@ -28,24 +30,24 @@ class Drivetrain:
             self.print, self.clear = lambda *args, **kwargs: None
 
         self._front_left_motor = Motor(
-            Constants.motor_1_port,
-            Constants.motor_1_gear_ratio,
-            Constants.motor_1_inverted,
+            Constants.front_left_motor_port,
+            Constants.front_left_motor_gear_ratio,
+            Constants.front_left_motor_inverted,
         )
         self._front_right_motor = Motor(
-            Constants.motor_2_port,
-            Constants.motor_2_gear_ratio,
-            Constants.motor_2_inverted,
+            Constants.front_right_motor_port,
+            Constants.front_right_motor_gear_ratio,
+            Constants.front_right_motor_inverted,
         )
         self._rear_right_motor = Motor(
-            Constants.motor_3_port,
-            Constants.motor_3_gear_ratio,
-            Constants.motor_3_inverted,
+            Constants.rear_right_motor_port,
+            Constants.rear_right_motor_gear_ratio,
+            Constants.rear_right_motor_inverted,
         )
         self._rear_left_motor = Motor(
-            Constants.motor_4_port,
-            Constants.motor_4_gear_ratio,
-            Constants.motor_4_inverted,
+            Constants.rear_left_motor_port,
+            Constants.rear_left_motor_ratio,
+            Constants.rear_left_motor_inverted,
         )
         self._inertial = Inertial(Constants.inertial_sensor_port)
 
@@ -57,7 +59,7 @@ class Drivetrain:
         self._movement_allowed_error = Constants.drivetrain_allowed_positional_error_cm
         self._wheel_circumference_cm = Constants.wheel_circumference_cm
         self._driver_control_deadzone = Constants.driver_control_deadzone
-        self._rotation_PID = PIDController(
+        self.rotation_PID = PIDController(
             self.timer,
             Constants.drivetrain_turn_Kp,
             Constants.drivetrain_turn_Ki,
@@ -181,7 +183,7 @@ class Drivetrain:
                 calculate_wheel_power(
                     direction, speed, self._front_left_wheel_rotation_rad
                 )
-                - (-spin if Constants.motor_1_inverted else spin)
+                - (-spin if Constants.front_left_motor_inverted else spin)
             )
             * 100,
             PERCENT,
@@ -191,7 +193,7 @@ class Drivetrain:
                 calculate_wheel_power(
                     direction, speed, self._front_right_wheel_rotation_rad
                 )
-                - (-spin if Constants.motor_2_inverted else spin)
+                - (-spin if Constants.front_right_motor_inverted else spin)
             )
             * 100,
             PERCENT,
@@ -201,7 +203,7 @@ class Drivetrain:
                 calculate_wheel_power(
                     direction, speed, self._rear_right_wheel_rotation_rad
                 )
-                - (-spin if Constants.motor_3_inverted else spin)
+                - (-spin if Constants.rear_right_motor_inverted else spin)
             )
             * 100,
             PERCENT,
@@ -211,7 +213,7 @@ class Drivetrain:
                 calculate_wheel_power(
                     direction, speed, self._rear_left_wheel_rotation_rad
                 )
-                - (-spin if Constants.motor_4_inverted else spin)
+                - (-spin if Constants.rear_left_motor_inverted else spin)
             )
             * 100,
             PERCENT,
@@ -236,12 +238,12 @@ class Drivetrain:
         direction_to_point = (
             math.atan2(self.odometry.y - position[1], self.odometry.x - position[0])
             + math.pi / 2
-        )  # We add math.pi / 2 because the drivetrain 0 degrees is actually on the right
+        )  # We add math.pi / 2 because on the drivetrain 0 degrees is actually on the right. This means we must shift our atan calculation
         self.turn_to_face_heading(direction_to_point)
 
     def turn_to_face_heading(self, heading_rad):
         angular_difference = self.calculate_optimal_turn(heading_rad)
-        self._rotation_PID.target_value += angular_difference
+        self.rotation_PID.setpoint += angular_difference
 
     def stop(self):
         self.move(0, 0)
@@ -252,71 +254,8 @@ class Drivetrain:
         )  # Factor out the robot's current rotation from the desired direction
         self.move(direction, magnitude, spin)
 
-    def move_with_controller(
-        self, controller: Controller, headless: bool = False, PID_turning: bool = False
-    ) -> None:
-        """
-        Move using the controller input
-
-        Args:
-            controller: The controller to pull input from
-            headless: Whether to move the robot in headless mode
-            PID_turning: Whether to control the direction of the drivetrain with PID
-        """
-
-        self._current_move_with_controller_execution_time = self.timer.time(SECONDS)
-        if self._last_move_with_controller_execution_time is not None:
-            delta_time = (
-                self._current_move_with_controller_execution_time
-                - self._last_move_with_controller_execution_time
-            )
-        else:
-            delta_time = 0
-        if delta_time > 0.1:
-            self.print("move_with_controller: delta_time > 100ms")
-            delta_time = 0
-
-        left_stick = (
-            controller.axis4.position() * 0.01,
-            controller.axis3.position() * 0.01,
-        )
-        right_stick = (
-            controller.axis1.position() * 0.01,
-            controller.axis1.position() * 0.01,
-        )
-
-        movement_direction = math.atan2(left_stick[1], left_stick[0])
-
-        # Normalize the turning amount across a cubic curve
-        normalized_right_x = cubic_filter(
-            right_stick[0], Constants.turn_cubic_linearity
-        )
-
-        if PID_turning:
-            # The line below uses -= because the PID direction is in positive counterclockwise
-            self._rotation_PID.target_value -= (
-                normalized_right_x * Constants.driver_control_turn_speed_rad_per_second
-            ) * delta_time
-
-        magnitude = hypotenuse(left_stick[0], left_stick[1])
-
-        if headless:
-            if PID_turning:
-                self.move_headless(movement_direction, magnitude)
-            else:
-                self.move_headless(movement_direction, magnitude, -normalized_right_x)
-        else:
-            if PID_turning:
-                self.move(movement_direction, magnitude)
-            else:
-                self.move(movement_direction, magnitude, -normalized_right_x)
-
-        self._last_move_with_controller_execution_time = (
-            self._current_move_with_controller_execution_time
-        )
-
     def update_direction_PID(self):
-        self._rotation_PID_output = self._rotation_PID.update(
+        self._rotation_PID_output = self.rotation_PID.update(
             self.odometry.rotation_rad
         )
 
@@ -335,7 +274,7 @@ class Drivetrain:
         if self._inertial:
             self._inertial.set_heading(0, DEGREES)
         self._rotation_PID_output = 0
-        self._rotation_PID.target_value = 0
+        self.rotation_PID.setpoint = 0
         self._current_target_direction = 0
         self._current_target_x_cm = 0
         self._current_target_y_cm = 0
@@ -365,7 +304,7 @@ class Drivetrain:
         Get the current target heading in radians
         :returns: The current target heading of the robot in radians (use heading_deg for degrees)
         """
-        return self._rotation_PID.target_value
+        return self.rotation_PID.setpoint
 
     @target_heading_rad.setter
     def target_heading_rad(self, heading) -> None:
@@ -373,7 +312,7 @@ class Drivetrain:
         Set the current target heading in radians
         :param heading: New target heading in radians
         """
-        self._rotation_PID.target_value = heading
+        self.rotation_PID.setpoint = heading
 
     @property
     def target_heading_deg(self) -> float:
@@ -381,7 +320,7 @@ class Drivetrain:
         Get the current target heading in degrees
         :returns: The current target heading of the robot in degrees (use heading_deg for radians)
         """
-        return math.degrees(self._rotation_PID.target_value)
+        return math.degrees(self.rotation_PID.setpoint)
 
     @target_heading_deg.setter
     def target_heading_deg(self, heading) -> None:
@@ -389,7 +328,7 @@ class Drivetrain:
         Set the current target heading in degrees
         :param heading: New target heading in degrees
         """
-        self._rotation_PID.target_value = math.radians(heading)
+        self.rotation_PID.setpoint = math.radians(heading)
 
     def set_braking(self, braking):
         if braking:

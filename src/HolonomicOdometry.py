@@ -1,14 +1,15 @@
 from Utilities import *
+import math
 import Constants
 
 
 class Odometry:
     def __init__(
         self,
-        motor_1: Motor,
-        motor_2: Motor,
-        motor_3: Motor,
-        motor_4: Motor,
+        front_left_motor: Motor,
+        front_right_motor: Motor,
+        rear_left_motor: Motor,
+        rear_right_motor: Motor,
         timer: Brain.timer,
         inertial: Inertial,
         terminal: Terminal = None,
@@ -16,16 +17,13 @@ class Odometry:
         """
         A class for tracking the robot's position and rotation, this class integrates a stream of motor velocities into a position
         This implementation only works on Holonomic drivetrains (Mecanum, and X-drive), but the concept is similar to other odometry implementations
-        :param motor_1: Motor 1
-        :type motor_1: Motor
-        :param motor_2: Motor 2
-        :type motor_2: Motor
-        :param motor_3: Motor 3
-        :type motor_3: Motor
-        :param motor_4: Motor 4
-        :type motor_4: Motor
-        :param terminal: An optional terminal to print debug output to
-        :type terminal: Terminal | None
+
+        Args:
+            front_left_motor: The front left motor object for the odometry
+            front_right_motor: The front right motor object for the odometry
+            rear_right_motor: The rear right motor object for the odometry
+            rear_left_motor: The rear left motor object for the odometry
+            terminal: An optional terminal to print debug output to
         """
         self.timer = timer
         self.terminal = terminal
@@ -43,18 +41,20 @@ class Odometry:
         # Define the initial conditions of the robot
         self._x_position = self._y_position = self._current_rotation_rad = 0
         self.current_heading_rad = self._current_rotation_rad
-        self._motor_1 = motor_1
-        self._motor_2 = motor_2
-        self._motor_3 = motor_3
-        self._motor_4 = motor_4
-        self._wheel_1_last_position = (
-            self._wheel_2_last_position
-        ) = self._wheel_3_last_position = self._wheel_4_last_position = 0
-        self._wheel_1_distance_since_last_tick = (
-            self._wheel_2_distance_since_last_tick
+        self._front_left_motor = front_left_motor
+        self._front_right_motor = front_right_motor
+        self._rear_left_motor = rear_left_motor
+        self._rear_right_motor = rear_right_motor
+        self._front_left_motor_last_position = (
+            self._front_right_motor_last_position
         ) = (
-            self._wheel_3_distance_since_last_tick
-        ) = self._wheel_4_distance_since_last_tick = 0
+            self._rear_right_motor_last_position
+        ) = self._rear_left_motor_last_position = 0
+        self._front_left_motor_distance_since_last_tick = (
+            self._front_right_motor_distance_since_last_tick
+        ) = (
+            self._rear_right_motor_distance_since_last_tick
+        ) = self._rear_left_motor_distance_since_last_tick = 0
         self._previousTime = self.timer.time(SECONDS)
         self._auto_update = True
         self._inertial = inertial
@@ -72,66 +72,93 @@ class Odometry:
         self._current_rotation_rad = 0
         self.current_heading_rad = 0
         self._previousTime = self.timer.time(SECONDS)
-        self._wheel_1_last_position = self._motor_1.position(DEGREES) / Constants.encoder_ticks_per_rotation
-        self._wheel_2_last_position = self._motor_2.position(DEGREES) / Constants.encoder_ticks_per_rotation
-        self._wheel_3_last_position = self._motor_3.position(DEGREES) / Constants.encoder_ticks_per_rotation
-        self._wheel_4_last_position = self._motor_4.position(DEGREES) / Constants.encoder_ticks_per_rotation
-        self._wheel_1_distance_since_last_tick = 0
-        self._wheel_2_distance_since_last_tick = 0
-        self._wheel_3_distance_since_last_tick = 0
-        self._wheel_4_distance_since_last_tick = 0
+        self._front_left_motor_last_position = (
+            self._front_left_motor.position(DEGREES)
+            / Constants.encoder_ticks_per_rotation
+        )
+        self._front_right_motor_last_position = (
+            self._front_right_motor.position(DEGREES)
+            / Constants.encoder_ticks_per_rotation
+        )
+        self._rear_left_motor_last_position = (
+            self._rear_left_motor.position(DEGREES)
+            / Constants.encoder_ticks_per_rotation
+        )
+        self._rear_right_motor_last_position = (
+            self._rear_right_motor.position(DEGREES)
+            / Constants.encoder_ticks_per_rotation
+        )
+        self._front_left_motor_distance_since_last_tick = 0
+        self._front_right_motor_distance_since_last_tick = 0
+        self._rear_left_motor_distance_since_last_tick = 0
+        self._rear_right_motor_distance_since_last_tick = 0
 
     def update_positions(
         self,
-        motor_1_position: float,
-        motor_2_position: float,
-        motor_3_position: float,
-        motor_4_position: float,
+        front_left_motor_position: float,
+        front_right_motor_position: float,
+        rear_left_motor_position: float,
+        rear_right_motor_position: float,
     ) -> None:
         """
         Updates the algorithm with the current wheel positions
-        :param motor_1_position: Motor 1's position
-        :param motor_2_position: Motor 2's position
-        :param motor_3_position: Motor 3's position
-        :param motor_4_position: Motor 4's position
+        :param front_left_motor_position: The position of the front left motor
+        :param front_right_motor_position: The position of the front right motor
+        :param rear_left_motor_position: The position of the rear right motor
+        :param rear_right_motor_position: The position of the rear left motor
         """
 
-        self._wheel_1_distance_since_last_tick = (motor_1_position - self._wheel_1_last_position) * self._wheel_circumference_cm
-        self._wheel_2_distance_since_last_tick = (motor_2_position - self._wheel_2_last_position) * self._wheel_circumference_cm
-        self._wheel_3_distance_since_last_tick = (motor_3_position - self._wheel_3_last_position) * self._wheel_circumference_cm
-        self._wheel_4_distance_since_last_tick = (motor_4_position - self._wheel_4_last_position) * self._wheel_circumference_cm
+        self._front_left_motor_distance_since_last_tick = (
+            front_left_motor_position - self._front_left_motor_last_position
+        ) * self._wheel_circumference_cm
+        self._front_right_motor_distance_since_last_tick = (
+            front_right_motor_position - self._front_right_motor_last_position
+        ) * self._wheel_circumference_cm
+        self._rear_left_motor_distance_since_last_tick = (
+            rear_left_motor_position - self._rear_left_motor_last_position
+        ) * self._wheel_circumference_cm
+        self._rear_right_motor_distance_since_last_tick = (
+            rear_right_motor_position - self._rear_right_motor_last_position
+        ) * self._wheel_circumference_cm
 
-        self._wheel_1_last_position = motor_1_position
-        self._wheel_2_last_position = motor_2_position
-        self._wheel_3_last_position = motor_3_position
-        self._wheel_4_last_position = motor_4_position
+        self._front_left_motor_last_position = front_left_motor_position
+        self._front_right_motor_last_position = front_right_motor_position
+        self._rear_right_motor_last_position = rear_right_motor_position
+        self._rear_left_motor_last_position = rear_left_motor_position
 
     def update_states(self) -> None:
         # Convert the angle value from the inertial sensor to radians with clockwise as negative
-        self._current_rotation_rad = -math.radians(
-            self._inertial.rotation(DEGREES)
-        )
+        self._current_rotation_rad = -math.radians(self._inertial.rotation(DEGREES))
 
         theta = self._current_rotation_rad + Constants.drivetrain_rotation_offset
         sin_theta = math.sin(theta)
         cos_theta = math.cos(theta)
 
-        if not Constants.motor_1_inverted:
-            self._wheel_1_distance_since_last_tick *= -1
-        if not Constants.motor_2_inverted:
-            self._wheel_2_distance_since_last_tick *= -1
-        if not Constants.motor_3_inverted:
-            self._wheel_3_distance_since_last_tick *= -1
-        if not Constants.motor_4_inverted:
-            self._wheel_4_distance_since_last_tick *= -1
+        if not Constants.front_left_motor_inverted:
+            self._front_left_motor_distance_since_last_tick *= -1
+        if not Constants.front_right_motor_inverted:
+            self._front_right_motor_distance_since_last_tick *= -1
+        if not Constants.rear_right_motor_inverted:
+            self._rear_right_motor_distance_since_last_tick *= -1
+        if not Constants.rear_left_motor_inverted:
+            self._rear_left_motor_distance_since_last_tick *= -1
 
-        dx1 = (self._wheel_1_distance_since_last_tick - self._wheel_3_distance_since_last_tick) / 2
-        dx2 = (self._wheel_3_distance_since_last_tick - self._wheel_1_distance_since_last_tick) / 2
+        dx1 = (
+            self._front_left_motor_distance_since_last_tick
+            - self._rear_right_motor_distance_since_last_tick
+        ) / 2
+        dx2 = (
+            self._rear_right_motor_distance_since_last_tick
+            - self._front_left_motor_distance_since_last_tick
+        ) / 2
 
-        dy = (self._wheel_4_distance_since_last_tick - self._wheel_2_distance_since_last_tick) / 2
+        dy = (
+            self._rear_left_motor_distance_since_last_tick
+            - self._front_right_motor_distance_since_last_tick
+        ) / 2
 
-        delta_x = ((dx1 * sin_theta) + (dy * cos_theta))
-        delta_y = ((dy * sin_theta) + (dx2 * cos_theta))
+        delta_x = (dx1 * sin_theta) + (dy * cos_theta)
+        delta_y = (dy * sin_theta) + (dx2 * cos_theta)
 
         direction = math.atan2(delta_y, delta_x)
 
@@ -148,7 +175,13 @@ class Odometry:
                 next_element = slip_directions[i + 1]
 
             if previous_element < direction < next_element:
-                scalar = interpolate(previous_element, next_element, self._slip_coefficients[previous_element], self._slip_coefficients[next_element], direction)
+                scalar = interpolate(
+                    previous_element,
+                    next_element,
+                    self._slip_coefficients[previous_element],
+                    self._slip_coefficients[next_element],
+                    direction,
+                )
                 delta_x *= scalar
                 delta_y *= scalar
                 break
@@ -271,12 +304,25 @@ class Odometry:
             if self._auto_update:
                 self.update_states()
                 self.update_positions(
-                    self._motor_1.position(DEGREES) / Constants.encoder_ticks_per_rotation,
-                    self._motor_2.position(DEGREES) / Constants.encoder_ticks_per_rotation,
-                    self._motor_3.position(DEGREES) / Constants.encoder_ticks_per_rotation,
-                    self._motor_4.position(DEGREES) / Constants.encoder_ticks_per_rotation,
+                    self._front_left_motor.position(DEGREES)
+                    / Constants.encoder_ticks_per_rotation,
+                    self._front_right_motor.position(DEGREES)
+                    / Constants.encoder_ticks_per_rotation,
+                    self._rear_right_motor.position(DEGREES)
+                    / Constants.encoder_ticks_per_rotation,
+                    self._rear_left_motor.position(DEGREES)
+                    / Constants.encoder_ticks_per_rotation,
                 )
             else:
-                self.update_positions(self._wheel_1_last_position / Constants.encoder_ticks_per_rotation, self._wheel_2_last_position / Constants.encoder_ticks_per_rotation, self._wheel_3_last_position / Constants.encoder_ticks_per_rotation, self._wheel_4_last_position / Constants.encoder_ticks_per_rotation)
+                self.update_positions(
+                    self._front_left_motor_last_position
+                    / Constants.encoder_ticks_per_rotation,
+                    self._front_right_motor_last_position
+                    / Constants.encoder_ticks_per_rotation,
+                    self._rear_right_motor_last_position
+                    / Constants.encoder_ticks_per_rotation,
+                    self._rear_left_motor_last_position
+                    / Constants.encoder_ticks_per_rotation,
+                )
                 self._previousTime = self.timer.time(SECONDS)
             wait(5)
