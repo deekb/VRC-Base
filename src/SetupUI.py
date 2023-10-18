@@ -1,7 +1,6 @@
 import Constants
 import math
 from vex import *
-from Utilities import Point
 
 
 class SetupUI:
@@ -34,9 +33,7 @@ class SetupUI:
         self.ring_1_rotation_rad = (
             self.ring_2_rotation_rad
         ) = self.ring_3_rotation_rad = 0
-        self.phosphorus_logo_center = Point(
-            Constants.screen_size_x / 2, 54 + Constants.phosphorus_bmp_size_y / 2
-        )
+        self.phosphorus_logo_center = (Constants.screen_size_x / 2, 54 + Constants.phosphorus_bmp_size_y / 2)
 
     def top_left_button_pressed(self):
         if self.screen_pressing:
@@ -154,13 +151,13 @@ class SetupUI:
             self.draw_button(Constants.deploy_directory + "Info_Button.bmp", Constants.bottom | Constants.left)
             
             self.screen.draw_circle(
-                self.phosphorus_logo_center.x, self.phosphorus_logo_center.y, 33
+                self.phosphorus_logo_center[0], self.phosphorus_logo_center[1], 33
             )
             self.screen.draw_circle(
-                self.phosphorus_logo_center.x, self.phosphorus_logo_center.y, 46
+                self.phosphorus_logo_center[0], self.phosphorus_logo_center[1], 46
             )
             self.screen.draw_circle(
-                self.phosphorus_logo_center.x, self.phosphorus_logo_center.y, 59
+                self.phosphorus_logo_center[0], self.phosphorus_logo_center[1], 59
             )
             
             self.electrons.clear()
@@ -202,13 +199,13 @@ class SetupUI:
             self.screen.set_pen_color(Color.WHITE)
         
             self.screen.draw_circle(
-                self.phosphorus_logo_center.x, self.phosphorus_logo_center.y, 33
+                self.phosphorus_logo_center[0], self.phosphorus_logo_center[1], 33
             )
             self.screen.draw_circle(
-                self.phosphorus_logo_center.x, self.phosphorus_logo_center.y, 46
+                self.phosphorus_logo_center[0], self.phosphorus_logo_center[1], 46
             )
             self.screen.draw_circle(
-                self.phosphorus_logo_center.x, self.phosphorus_logo_center.y, 59
+                self.phosphorus_logo_center[0], self.phosphorus_logo_center[1], 59
             )
         
             self.screen.set_fill_color(Color.CYAN)
@@ -222,9 +219,9 @@ class SetupUI:
             for index in range(0, 2):
                 self.electrons.append(
                     (
-                        self.phosphorus_logo_center.x
+                        self.phosphorus_logo_center[0]
                         + math.sin(self.ring_1_rotation_rad + self.tau * (index / 2)) * 33,
-                        self.phosphorus_logo_center.y
+                        self.phosphorus_logo_center[1]
                         + math.cos(self.ring_1_rotation_rad + self.tau * (index / 2)) * 33,
                     )
                 )
@@ -232,9 +229,9 @@ class SetupUI:
             for index in range(0, 8):
                 self.electrons.append(
                     (
-                        self.phosphorus_logo_center.x
+                        self.phosphorus_logo_center[0]
                         + math.sin(self.ring_2_rotation_rad + self.tau * (index / 8)) * 46,
-                        self.phosphorus_logo_center.y
+                        self.phosphorus_logo_center[1]
                         + math.cos(self.ring_2_rotation_rad + self.tau * (index / 8)) * 46,
                     )
                 )
@@ -242,9 +239,9 @@ class SetupUI:
             for index in range(0, 5):
                 self.electrons.append(
                     (
-                        self.phosphorus_logo_center.x
+                        self.phosphorus_logo_center[0]
                         + math.sin(self.ring_3_rotation_rad + self.tau * (index / 5)) * 59,
-                        self.phosphorus_logo_center.y
+                        self.phosphorus_logo_center[1]
                         + math.cos(self.ring_3_rotation_rad + self.tau * (index / 5)) * 59,
                     )
                 )
