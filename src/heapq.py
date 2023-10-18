@@ -278,7 +278,7 @@ def _siftup(heap, pos):
     _siftdown(heap, startpos, pos)
 
 def _siftdown_max(heap, startpos, pos):
-    'Maxheap variant of _siftdown'
+    """Maxheap variant of _siftdown"""
     newitem = heap[pos]
     # Follow the path to the root, moving parents down until finding a place
     # newitem fits.
@@ -293,7 +293,7 @@ def _siftdown_max(heap, startpos, pos):
     heap[pos] = newitem
 
 def _siftup_max(heap, pos):
-    'Maxheap variant of _siftup'
+    """Maxheap variant of _siftup"""
     endpos = len(heap)
     startpos = pos
     newitem = heap[pos]
@@ -314,7 +314,7 @@ def _siftup_max(heap, pos):
     _siftdown_max(heap, startpos, pos)
 
 def merge(*iterables, key=None, reverse=False):
-    '''Merge multiple sorted inputs into a single sorted output.
+    """Merge multiple sorted inputs into a single sorted output.
 
     Similar to sorted(itertools.chain(*iterables)) but returns a generator,
     does not pull the data into memory all at once, and assumes that each of
@@ -329,7 +329,7 @@ def merge(*iterables, key=None, reverse=False):
     >>> list(merge(['dog', 'horse'], ['cat', 'fish', 'kangaroo'], key=len))
     ['dog', 'cat', 'fish', 'horse', 'kangaroo']
 
-    '''
+    """
 
     h = []
     h_append = h.append
