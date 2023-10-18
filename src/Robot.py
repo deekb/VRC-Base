@@ -16,7 +16,7 @@ For more information about the project, you can contact Derek Baier at the given
 import Constants
 from Autonomous import NothingAutonomous
 from HolonomicDrivetrain import Drivetrain
-from Intake import Intake
+from RollerIntake import Intake
 from SetupUI import SetupUI
 import math
 from Utilities import *
@@ -46,12 +46,6 @@ class Robot:
         self.primary_controller = Controller(PRIMARY)
         self.secondary_controller = Controller(PARTNER)
 
-        self.optical_sensor = Optical(Constants.optical_sensor_port)
-        self.optical_sensor.set_light_power(100, PERCENT)
-
-        self.triball_detected = False
-        self.previous_triball_detected = False
-
         self.driver_control_threads = []
         self.autonomous_threads = []
         self.setup_complete = False
@@ -80,12 +74,6 @@ class Robot:
         autonomous_log_object = Logging(log_name="Autonomous")
         autonomous = NothingAutonomous(autonomous_log_object)
         autonomous.run()
-
-    def check_triball_detected(self):
-        return (
-            abs(self.optical_sensor.hue() - 80) <= 10
-            and self.optical_sensor.is_near_object()
-        )
 
     def on_driver_control(self):
         """
