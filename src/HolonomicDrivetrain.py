@@ -13,8 +13,8 @@ class Drivetrain:
     def __init__(self, timer: Brain.timer, terminal: Terminal = None) -> None:
         """
         Initialize a new drivetrain with the specified properties
-        :param timer: A brain.timer object used for getting delta times
-        :type timer: Brain.timer
+        :param timer: A brain.timer() object used for getting delta times
+        :type timer: Brain.timer()
         :param terminal: An optional terminal to print debug output to
         :type terminal: Terminal | None
         """
@@ -103,7 +103,7 @@ class Drivetrain:
         Move to the specified position
         :param target_position: The position to mave to
         :type target_position: tuple[float, float]
-        :param maximum_speed: The maximum speed between zero and one for the robot
+        :param maximum_speed: The maximum speed between zero and one for the robot during the move
         :type maximum_speed: float
         """
         self._current_target_x_cm, self._current_target_y_cm = target_position
@@ -121,6 +121,7 @@ class Drivetrain:
             )
 
             # calculate the remaining distance to move
+            # TODO: use distance_cm for trapezoidal movement profiling
             distance_cm = hypotenuse(
                 self._current_target_x_cm - self.odometry.x,
                 self._current_target_y_cm - self.odometry.y,
@@ -134,13 +135,52 @@ class Drivetrain:
             self.move_to_position(point, maximum_speed)
         self.stop()
 
+    def move_towards_direction_for_distance(self, direction, distance_cm, speed):
+        delta_x = math.cos(direction) * distance_cm
+        delta_y = math.sin(direction) * distance_cm
+
+        self.move_to_position(
+            (self._current_target_x_cm + delta_x, self._current_target_y_cm + delta_y),
+            speed,
+        )
+
+    def forward(self, distance_cm, speed=1, field_relative=False):
+        movement_direction = 0
+        if not field_relative:
+            movement_direction += self._current_target_direction
+
+        self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
+
+    def backwards(self, distance_cm, speed=1, field_relative=False):
+        movement_direction = math.pi
+        if not field_relative:
+            movement_direction += self._current_target_direction
+
+        self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
+
+    def strafe_left(self, distance_cm, speed=1, field_relative=False):
+        movement_direction = math.pi / 2
+        if not field_relative:
+            movement_direction += self._current_target_direction
+
+        self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
+
+    def strafe_right(self, distance_cm, speed=1, field_relative=False):
+        movement_direction = -math.pi / 2
+        if not field_relative:
+            movement_direction += self._current_target_direction
+
+        self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
+
     def move(self, direction, speed, spin=None) -> None:
         if spin is None:
             spin = self._rotation_PID_output
         speed = clamp(speed, 0, 1)
         self._front_left_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._front_left_wheel_rotation_rad)
+                calculate_wheel_power(
+                    direction, speed, self._front_left_wheel_rotation_rad
+                )
                 - (-spin if Constants.motor_1_inverted else spin)
             )
             * 100,
@@ -148,7 +188,9 @@ class Drivetrain:
         )
         self._front_right_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._front_right_wheel_rotation_rad)
+                calculate_wheel_power(
+                    direction, speed, self._front_right_wheel_rotation_rad
+                )
                 - (-spin if Constants.motor_2_inverted else spin)
             )
             * 100,
@@ -156,7 +198,9 @@ class Drivetrain:
         )
         self._rear_right_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._rear_right_wheel_rotation_rad)
+                calculate_wheel_power(
+                    direction, speed, self._rear_right_wheel_rotation_rad
+                )
                 - (-spin if Constants.motor_3_inverted else spin)
             )
             * 100,
@@ -164,7 +208,9 @@ class Drivetrain:
         )
         self._rear_left_motor.set_velocity(
             (
-                calculate_wheel_power(direction, speed, self._rear_left_wheel_rotation_rad)
+                calculate_wheel_power(
+                    direction, speed, self._rear_left_wheel_rotation_rad
+                )
                 - (-spin if Constants.motor_4_inverted else spin)
             )
             * 100,
@@ -230,13 +276,21 @@ class Drivetrain:
             self.print("move_with_controller: delta_time > 100ms")
             delta_time = 0
 
-        left_stick = (controller.axis4.position() * 0.01, controller.axis3.position() * 0.01)
-        right_stick = (controller.axis1.position() * 0.01, controller.axis1.position() * 0.01)
+        left_stick = (
+            controller.axis4.position() * 0.01,
+            controller.axis3.position() * 0.01,
+        )
+        right_stick = (
+            controller.axis1.position() * 0.01,
+            controller.axis1.position() * 0.01,
+        )
 
         movement_direction = math.atan2(left_stick[1], left_stick[0])
 
         # Normalize the turning amount across a cubic curve
-        normalized_right_x = cubic_filter(right_stick[0], Constants.turn_cubic_linearity)
+        normalized_right_x = cubic_filter(
+            right_stick[0], Constants.turn_cubic_linearity
+        )
 
         if PID_turning:
             # The line below uses -= because the PID direction is in positive counterclockwise
