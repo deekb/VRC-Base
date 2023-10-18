@@ -18,7 +18,8 @@ from Autonomous import NothingAutonomous
 from HolonomicDrivetrain import Drivetrain
 from Intake import Intake
 from SetupUI import SetupUI
-from Utilities import Terminal, Logging, BinarySemaphore
+import math
+from Utilities import *
 from vex import *
 
 __title__ = Constants.__title__
@@ -59,8 +60,6 @@ class Robot:
 
         self.drivetrain = Drivetrain(timer=self.brain.timer, terminal=self.terminal)
 
-        self.drivetrain_thread_lock = BinarySemaphore()
-
         self.intake = Intake(self.brain)
 
         self.drivetrain.odometry.position = Constants.robot_start_position
@@ -96,50 +95,55 @@ class Robot:
         while not self.setup_complete:
             wait(5)
         while True:
-            self.drivetrain_thread_lock.acquire()  # Ensure this thread is allowed to use the drivetrain
-            self.drivetrain.move_with_controller(
-                self.primary_controller,
-                headless=Constants.driver_control_headless,
-                PID_turning=Constants.PID_turning,
+            left_stick = (
+                self.primary_controller.axis4.position() * 0.01,
+                self.primary_controller.axis3.position() * 0.01,
             )
+            right_stick = (
+                self.primary_controller.axis1.position() * 0.01,
+                self.primary_controller.axis1.position() * 0.01,
+            )
+
+            movement_direction = math.atan2(left_stick[1], left_stick[0])
+
+            # Normalize the turning amount across a cubic curve
+            normalized_right_x = cubic_filter(
+                right_stick[0], Constants.turn_cubic_linearity
+            )
+
+            # The line below uses -= because the PID direction is in positive counterclockwise
+            self.drivetrain.rotation_PID.setpoint = self.drivetrain.odometry.current_heading_rad
+
+            magnitude = hypotenuse(left_stick[0], left_stick[1])
+
+            if Constants.driver_control_headless:
+                if Constants.PID_turning:
+                    self.drivetrain.move_headless(movement_direction, magnitude)
+                else:
+                    self.drivetrain.move_headless(
+                        movement_direction, magnitude, -normalized_right_x
+                    )
+            else:
+                if Constants.PID_turning:
+                    self.drivetrain.move(movement_direction, magnitude)
+                else:
+                    self.drivetrain.move(movement_direction, magnitude, -normalized_right_x)
+
             self.drivetrain.update_direction_PID()
-            self.drivetrain_thread_lock.release()  # Allow other threads that are waiting to acquire the drivetrain to do so
-            # self.triball_detected = self.check_triball_detected()
-            # if (
-            #     self.triball_detected != self.previous_triball_detected
-            #     and self.triball_detected
-            # ):
-            #     self.intake.claw_close()
-            #     self.intake.wrist_up()
-            # self.previous_triball_detected = self.triball_detected
             wait(5, MSEC)
 
     def debug_thread(self):
         while True:
             if self.setup_complete:
                 if self.primary_controller.buttonA.pressing():
-                    self.drivetrain_thread_lock.acquire()
-                    try:
-                        self.drivetrain.reset()
-                    finally:
-                        self.drivetrain_thread_lock.release()
+                    self.drivetrain.reset()
                 if self.primary_controller.buttonB.pressing():
-                    self.drivetrain_thread_lock.acquire()
-                    try:
-                        self.drivetrain.follow_path(
-                            [(0, 0), (100, 0), (100, 100), (0, 0)], 0.4
-                        )
-                        self.drivetrain.follow_path(
-                            [(0, 0), (0, 100), (100, 100), (100, 0), (0, 0)], 0.4
-                        )
-                    finally:
-                        self.drivetrain_thread_lock.release()
-                # if self.primary_controller.buttonR2.pressing():
-                #     self.drivetrain_thread_lock.acquire()
-                #     try:
-                #         self.drivetrain.turn_to_face_position((0, 0))
-                #     finally:
-                #         self.drivetrain_thread_lock.release()
+                    self.drivetrain.follow_path(
+                        [(0, 0), (100, 0), (100, 100), (0, 0)], 0.4
+                    )
+                    self.drivetrain.follow_path(
+                        [(0, 0), (0, 100), (100, 100), (100, 0), (0, 0)], 0.4
+                    )
 
     def display_thread(self):
         def field_coordinates_to_screen(position):
@@ -236,8 +240,6 @@ class Robot:
         #     lambda: setattr(self.drivetrain, "target_heading_deg", 270)
         # )
 
-        self.primary_controller.buttonL1.pressed(self.intake.toggle_wrist)
-        self.primary_controller.buttonR1.pressed(self.intake.toggle_claw)
 
     def main(self):
         setup_ui = SetupUI(self.terminal, self.brain.screen)
