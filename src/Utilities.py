@@ -1,20 +1,20 @@
-import math
+from math import isinf, sqrt, cos, sin
+from Constants import font_size, log_directory
 from vex import *
-import Constants
 
 
-class Terminal(object):
+class Terminal:
     def __init__(self, brain):
         self.brain = brain
         self.log = Logging("Terminal", terminal=self)
-        self.brain.screen.set_font(Constants.font_size)
+        self.brain.screen.set_font(font_size)
 
-    def clear(self) -> None:
+    def clear(self):
         """
         Clears the brain screen
         """
 
-        self.brain.screen.set_font(Constants.font_size)
+        self.brain.screen.set_font(font_size)
         self.log.log("{Clearing terminal}\n")
         self.brain.screen.clear_screen()
         self.brain.screen.set_cursor(1, 1)
@@ -28,7 +28,7 @@ class Terminal(object):
             end: The string to print at the end (defaults to new line)
         """
 
-        self.brain.screen.set_font(Constants.font_size)
+        self.brain.screen.set_font(font_size)
         self.log.log(str(text) + str(end))
 
         # Deal with the vex brain class' inability to parse "\n" as a newline (^ look, Logging.log can do it ^)
@@ -52,7 +52,7 @@ class Terminal(object):
 
 class BinarySemaphore:
     """
-    Represents a binary semaphore
+    Represents a binary semaphore (thread lock) with two states, locked and unlocked and a method to acquire and release the lock
 
     See Also:
         https://en.m.wikipedia.org/wiki/Semaphore_(programming)
@@ -76,40 +76,42 @@ class BinarySemaphore:
         self.locked = False
 
 
-def apply_deadzone(value: float, dead_zone: float, maximum: float) -> float:
+def apply_deadzone(value: float, deadzone: float, maximum: float) -> float:
     """
     Apply a dead_zone to the passed value
-    :param maximum: The maximum value for the input, helps to smooth out the returned values when the value is outside the dead zone
-    :param value: The value to apply a deadzone to
-    :param dead_zone: The lowest value that should have a nonzero output
+
+    Args:
+        maximum: The maximum value for the input, helps to smooth out the returned values when the value is outside the dead zone
+        value: The value to apply a deadzone to
+        deadzone: The lowest value that should have a nonzero output
+
+    Returns:
+        The input value with the cubic filter applied
     """
 
-    if abs(value) < dead_zone:
+    if abs(value) < deadzone:
         return 0
     else:
-        return maximum / (maximum - dead_zone) * (value - dead_zone)
+        return maximum / (maximum - deadzone) * (value - deadzone)
 
 
-class MotorPID(object):
+class MotorPID:
     """
     Wrap a motor definition in this class to use a custom PID to control its movements ie: my_motor = MotorPID(Motor(...), kp, kd, t)
-    Waring, this class disables all motor functionality except the following functions:[set_velocity, set_stopping, stop, spin, velocity]
-    :param motor_object: The motor to apply the PID to
-    :param kp: Kp value for the PID: How quickly to modify the target value if it has not yet reached the desired value
-    :param ki: Ki value for the PID: Integral gain to reduce steady-state error
-    :param kd: Kd value for the PID: Higher values reduce the response time and limit overshoot
-    :param t: Time between PID updates
+    **Waring, this class disables all motor functionality except the following functions:[set_velocity, set_stopping, stop, spin, velocity]**
     """
 
-    def __init__(
-        self,
-        timer: Brain.timer,
-        motor_object,
-        kp: float = 0.4,
-        ki: float = 0.01,
-        kd: float = 0.05,
-        t: float = 0.1,
-    ):
+    def __init__(self, timer: Brain.timer, motor_object, kp: float = 0.4, ki: float = 0.01, kd: float = 0.05, t: float = 0.1):
+        """"
+        Creates an instance of the MotorPID
+
+        Args:
+            motor_object: The motor to apply the PID to
+            kp: Kp value for the PID: How quickly to modify the target value if it has not yet reached the desired value
+            ki: Ki value for the PID: Integral gain to reduce steady-state error
+            kd: Kd value for the PID: Higher values reduce the response time and limit overshoot
+            t: Time between PID updates
+        """
         self.motor_object = motor_object
         self.motor_PID = PIDController(timer, kp, ki, kd)
         self.pid_thread = Thread(self._loop)
@@ -124,8 +126,7 @@ class MotorPID(object):
 
     def _loop(self) -> None:
         """
-        Used to run the PID in a new thread:
-         updates the values the PID uses and handles
+        Used to run the PID in a new thread: updates the values the PID uses and handles
           applying the PID output to the motor
         """
 
@@ -153,7 +154,7 @@ class MotorPID(object):
         return self.motor_object.velocity(PERCENT)
 
 
-class PIDController(object):
+class PIDController:
     """
     A generalized PID controller implementation.
     """
@@ -246,7 +247,7 @@ class PIDController(object):
         self._kd = value
 
     @property
-    def target_value(self) -> float:
+    def setpoint(self) -> float:
         """
         Getter for the target value of the PID.
         :return: The target value.
@@ -254,8 +255,8 @@ class PIDController(object):
 
         return self._target_value
 
-    @target_value.setter
-    def target_value(self, value: float):
+    @setpoint.setter
+    def setpoint(self, value: float):
         """
         Setter for the target value of the PID.
         :param value: The new target value.
@@ -331,7 +332,7 @@ class Logging(object):
         else:
             self.print, self.clear = lambda *args, **kwargs: None
 
-        self.file_name = Constants.log_directory + str(log_name) + ".log"
+        self.file_name = log_directory + str(log_name) + ".log"
         self.file_object = open(
             self.file_name,
             "w",
@@ -388,21 +389,23 @@ def distance_from_point_to_line(point, slope, x_intercept, y_intercept):
     # Extract the coordinates of the point
     x0, y0 = point
     # Calculate the distance using the formula
-    if math.isinf(slope):
+    if isinf(slope):
         return abs(x0 - x_intercept)
     else:
-        return abs(a * x0 + b * y0 + c) / math.sqrt(a**2 + b**2)
+        return abs(a * x0 + b * y0 + c) / sqrt(a**2 + b**2)
 
 
 def clamp(value: float, lower_limit: float = None, upper_limit: float = None) -> float:
     """
     Restricts a value within a specified range.
-    :param value: The value to be clamped.
-    :param lower_limit: The lower limit of the range.
-        If None, no lower limit is applied.
-    :param upper_limit: The upper limit of the range.
-        If None, no upper limit is applied.
-    :return: The clamped value.
+
+    Args:
+        value: The value to be clamped.
+        lower_limit: The lower limit of the range. If None, no lower limit is applied.
+        upper_limit: The upper limit of the range. If None, no upper limit is applied.
+
+    Returns:
+        The clamped value.
     """
 
     if upper_limit < lower_limit:
@@ -419,18 +422,6 @@ def clamp(value: float, lower_limit: float = None, upper_limit: float = None) ->
     return value
 
 
-class Point:
-    def __init__(self, x=0, y=0):
-        self.x = x
-        self.y = y
-
-    def load_from_tuple(self, _tuple):
-        self.x, self.y = _tuple
-
-    def __repr__(self):
-        return "".join(["Point(", str(self.x), ",", str(self.y), ")"])
-
-
 def get_collision_point(
     robot_position,
     robot_rotation_rad,
@@ -439,10 +430,10 @@ def get_collision_point(
     sensor_distance_from_center_cm,
 ):
     return robot_position[0] + (
-        math.sin(robot_rotation_rad + sensor_rotation)
+        sin(robot_rotation_rad + sensor_rotation)
         * (sensor_distance_cm + sensor_distance_from_center_cm)
     ), robot_position[1] + (
-        math.cos(robot_rotation_rad + sensor_rotation)
+        cos(robot_rotation_rad + sensor_rotation)
         * (sensor_distance_cm + sensor_distance_from_center_cm)
     )
 
@@ -459,7 +450,7 @@ def hypotenuse(x: float, y: float) -> float:
         The hypotenuse length of a right triangle with sides x and y
     """
 
-    return math.sqrt(pow(x, 2) + pow(y, 2))
+    return sqrt(pow(x, 2) + pow(y, 2))
 
 
 def interpolate(x1: float, x2: float, y1: float, y2: float, x: float) -> float:
@@ -475,7 +466,6 @@ def interpolate(x1: float, x2: float, y1: float, y2: float, x: float) -> float:
 
     Returns:
         The Y value for the given x value, calculated using linear interpolation from the points given
-
     """
 
     return ((y2 - y1) * x + x2 * y1 - x1 * y2) / (x2 - x1)
@@ -497,7 +487,7 @@ def calculate_wheel_power(
         The calculated power for the wheel
     """
 
-    return movement_speed * math.cos(wheel_angle_rad - movement_angle_rad)
+    return movement_speed * cos(wheel_angle_rad - movement_angle_rad)
 
 
 def cubic_filter(value, linearity=0) -> float:
@@ -516,7 +506,7 @@ def cubic_filter(value, linearity=0) -> float:
         raise ValueError("Input value must be between -1 and 1")
     if linearity < 0:
         raise ValueError("Linearity must be equal to or greater than 0")
-    if math.isinf(linearity):
+    if isinf(linearity):
         raise ValueError("Linearity may not be infinite")
 
     return (value**3 + linearity * value) / (1 + linearity)
