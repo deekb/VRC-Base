@@ -12,7 +12,7 @@ class Drivetrain:
     A drivetrain controller for a holonomic drive base
     """
 
-    def __init__(self, timer: Brain.timer, terminal: Terminal = None) -> None:
+    def __init__(self, timer: Brain.timer, terminal: Terminal = None):
         """
         Initialize a new drivetrain with the specified properties
         :param timer: A brain.timer() object used for getting delta times
@@ -39,22 +39,22 @@ class Drivetrain:
             Constants.front_right_motor_gear_ratio,
             Constants.front_right_motor_inverted,
         )
-        self._rear_right_motor = Motor(
-            Constants.rear_right_motor_port,
-            Constants.rear_right_motor_gear_ratio,
-            Constants.rear_right_motor_inverted,
-        )
         self._rear_left_motor = Motor(
             Constants.rear_left_motor_port,
             Constants.rear_left_motor_ratio,
             Constants.rear_left_motor_inverted,
         )
+        self._rear_right_motor = Motor(
+            Constants.rear_right_motor_port,
+            Constants.rear_right_motor_gear_ratio,
+            Constants.rear_right_motor_inverted,
+        )
         self._inertial = Inertial(Constants.inertial_sensor_port)
 
         self._front_left_wheel_rotation_rad = Constants.front_left_wheel_rotation_rad
         self._front_right_wheel_rotation_rad = Constants.front_right_wheel_rotation_rad
-        self._rear_right_wheel_rotation_rad = Constants.rear_right_wheel_rotation_rad
         self._rear_left_wheel_rotation_rad = Constants.rear_left_wheel_rotation_rad
+        self._rear_right_wheel_rotation_rad = Constants.rear_right_wheel_rotation_rad
 
         self._movement_allowed_error = Constants.drivetrain_allowed_positional_error_cm
         self._wheel_circumference_cm = Constants.wheel_circumference_cm
@@ -76,19 +76,19 @@ class Drivetrain:
 
         self._front_left_motor.set_velocity(0, PERCENT)
         self._front_right_motor.set_velocity(0, PERCENT)
-        self._rear_right_motor.set_velocity(0, PERCENT)
         self._rear_left_motor.set_velocity(0, PERCENT)
+        self._rear_right_motor.set_velocity(0, PERCENT)
 
         self._front_left_motor.spin(FORWARD)
         self._front_right_motor.spin(FORWARD)
-        self._rear_right_motor.spin(FORWARD)
         self._rear_left_motor.spin(FORWARD)
+        self._rear_right_motor.spin(FORWARD)
 
         self._odometry = Odometry(
             self._front_left_motor,
             self._front_right_motor,
-            self._rear_right_motor,
             self._rear_left_motor,
+            self._rear_right_motor,
             timer=self.timer,
             inertial=self._inertial,
             terminal=self.terminal,
@@ -220,10 +220,10 @@ class Drivetrain:
             target_rear_left_wheel_speed /= maximum_power
             target_rear_right_wheel_speed /= maximum_power
 
-        self._front_left_motor.set_velocity(target_front_left_wheel_speed * 100)
-        self._front_right_motor.set_velocity(target_front_right_wheel_speed * 100)
-        self._rear_right_motor.set_velocity(target_rear_right_wheel_speed * 100)
-        self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 100)
+        self._front_left_motor.set_velocity(target_front_left_wheel_speed * 100, PERCENT)
+        self._front_right_motor.set_velocity(target_front_right_wheel_speed * 100, PERCENT)
+        self._rear_right_motor.set_velocity(target_rear_right_wheel_speed * 100, PERCENT)
+        self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 100, PERCENT)
 
     def calculate_optimal_turn(self, target_heading):
         # Calculate the angular difference
