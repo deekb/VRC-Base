@@ -21,8 +21,8 @@ class Odometry:
         Args:
             front_left_motor: The front left motor object for the odometry
             front_right_motor: The front right motor object for the odometry
-            rear_right_motor: The rear right motor object for the odometry
             rear_left_motor: The rear left motor object for the odometry
+            rear_right_motor: The rear right motor object for the odometry
             terminal: An optional terminal to print debug output to
         """
         self.timer = timer
@@ -185,7 +185,7 @@ class Odometry:
                     self._slip_coefficients[next_element],
                     direction,
                 )
-                self.print("Movement scalar: " + str(scalar))
+                # self.print("Movement scalar: " + str(scalar))
                 delta_x *= scalar
                 delta_y *= scalar
                 break

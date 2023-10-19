@@ -76,28 +76,38 @@ drivetrain_type = DrivetrainType.Mecanum
 wheel_radius_cm = 5.23875
 front_left_motor_port = Ports.PORT20
 front_right_motor_port = Ports.PORT11
-rear_right_motor_port = Ports.PORT1
 rear_left_motor_port = Ports.PORT10
+rear_right_motor_port = Ports.PORT1
 front_left_motor_gear_ratio = GearSetting.RATIO_18_1
 front_right_motor_gear_ratio = GearSetting.RATIO_18_1
+rear_left_motor_gear_ratio = GearSetting.RATIO_18_1
 rear_right_motor_gear_ratio = GearSetting.RATIO_18_1
-rear_left_motor_ratio = GearSetting.RATIO_18_1
 front_left_motor_inverted = False
 front_right_motor_inverted = True
-rear_right_motor_inverted = True
 rear_left_motor_inverted = False
+rear_right_motor_inverted = True
 encoder_ticks_per_rotation = 360  # Green: 360
-drivetrain_rotation_offset = 0
+drivetrain_rotation_offset = -pi / 4
 drivetrain_slip_coefficients = {
-    pi * 0: 0,
-    pi * -0.25: 0.9239,
-    pi * -0.5: 0.7071,
-    pi * -0.75: 0.9239,
-    pi * 1: 0,
-    pi * 0.75: 0.9239,
-    pi * 0.5: 0.7071,
-    pi * 0.25: 0.9239,
+    pi * 0: 1,
+    pi * -0.25: 1,
+    pi * -0.5: 1,
+    pi * -0.75: 1,
+    pi * 1: 1,
+    pi * 0.75: 1,
+    pi * 0.5: 1,
+    pi * 0.25: 1,
 }
+# drivetrain_slip_coefficients = {
+#     pi * 0: 0,
+#     pi * -0.25: 0.9239,
+#     pi * -0.5: 0.7071,
+#     pi * -0.75: 0.9239,
+#     pi * 1: 0,
+#     pi * 0.75: 0.9239,
+#     pi * 0.5: 0.7071,
+#     pi * 0.25: 0.9239,
+# }
 front_left_wheel_rotation_rad = pi / 4
 front_right_wheel_rotation_rad = pi / 4 + pi / 2
 rear_right_wheel_rotation_rad = pi / 4
@@ -171,5 +181,3 @@ top = 1
 bottom = 2
 left = 4
 right = 8
-
-

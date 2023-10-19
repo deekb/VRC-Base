@@ -41,7 +41,7 @@ class Drivetrain:
         )
         self._rear_left_motor = Motor(
             Constants.rear_left_motor_port,
-            Constants.rear_left_motor_ratio,
+            Constants.rear_left_motor_gear_ratio,
             Constants.rear_left_motor_inverted,
         )
         self._rear_right_motor = Motor(
@@ -222,8 +222,14 @@ class Drivetrain:
 
         self._front_left_motor.set_velocity(target_front_left_wheel_speed * 100, PERCENT)
         self._front_right_motor.set_velocity(target_front_right_wheel_speed * 100, PERCENT)
-        self._rear_right_motor.set_velocity(target_rear_right_wheel_speed * 100, PERCENT)
         self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 100, PERCENT)
+        self._rear_right_motor.set_velocity(target_rear_right_wheel_speed * 100, PERCENT)
+
+    def move_headless(self, direction, magnitude, spin):
+        direction -= (
+            self._odometry.rotation_rad
+        )  # Factor out the robot's current rotation from the desired direction
+        self.move(direction, magnitude, spin)
 
     def calculate_optimal_turn(self, target_heading):
         # Calculate the angular difference
@@ -258,12 +264,6 @@ class Drivetrain:
     def stop(self):
         self.move(0, 0, 0)
 
-    def move_headless(self, direction, magnitude, spin):
-        direction -= (
-            self._odometry.rotation_rad
-        )  # Factor out the robot's current rotation from the desired direction
-        self.move(direction, magnitude, spin)
-
     def update_direction_PID(self):
         self._rotation_PID_output = self.rotation_PID.update(
             self._odometry.rotation_rad
@@ -278,12 +278,12 @@ class Drivetrain:
         """
         self._front_left_motor.set_velocity(0, PERCENT)
         self._front_right_motor.set_velocity(0, PERCENT)
-        self._rear_right_motor.set_velocity(0, PERCENT)
         self._rear_left_motor.set_velocity(0, PERCENT)
+        self._rear_right_motor.set_velocity(0, PERCENT)
         self._front_left_motor.spin(FORWARD)
         self._front_right_motor.spin(FORWARD)
-        self._rear_right_motor.spin(FORWARD)
         self._rear_left_motor.spin(FORWARD)
+        self._rear_right_motor.spin(FORWARD)
         if self._inertial:
             self._inertial.set_heading(0, DEGREES)
         self._rotation_PID_output = 0
@@ -365,10 +365,10 @@ class Drivetrain:
         if braking:
             self._front_left_motor.set_stopping(BRAKE)
             self._front_right_motor.set_stopping(BRAKE)
-            self._rear_right_motor.set_stopping(BRAKE)
             self._rear_left_motor.set_stopping(BRAKE)
+            self._rear_right_motor.set_stopping(BRAKE)
         else:
             self._front_left_motor.set_stopping(COAST)
             self._front_right_motor.set_stopping(COAST)
-            self._rear_right_motor.set_stopping(COAST)
             self._rear_left_motor.set_stopping(COAST)
+            self._rear_right_motor.set_stopping(COAST)
