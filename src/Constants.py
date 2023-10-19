@@ -58,26 +58,26 @@ class IntakeState:
 
 
 """Sensors"""
-inertial_sensor_port = Ports.PORT12
+inertial_sensor_port = Ports.PORT19
 
 
 """Intake"""
-left_intake_motor_port = Ports.PORT21
+left_intake_motor_port = Ports.PORT18
 left_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 left_intake_motor_inverted = False
 
-right_intake_motor_port = Ports.PORT21
+right_intake_motor_port = Ports.PORT12
 right_intake_motor_gear_ratio = GearSetting.RATIO_18_1
-right_intake_motor_inverted = False
+right_intake_motor_inverted = True
 
 
 """Drivetrain Constants"""
 drivetrain_type = DrivetrainType.Mecanum
 wheel_radius_cm = 5.23875
-front_left_motor_port = Ports.PORT1
-front_right_motor_port = Ports.PORT10
-rear_right_motor_port = Ports.PORT20
-rear_left_motor_port = Ports.PORT11
+front_left_motor_port = Ports.PORT20
+front_right_motor_port = Ports.PORT11
+rear_right_motor_port = Ports.PORT1
+rear_left_motor_port = Ports.PORT10
 front_left_motor_gear_ratio = GearSetting.RATIO_18_1
 front_right_motor_gear_ratio = GearSetting.RATIO_18_1
 rear_right_motor_gear_ratio = GearSetting.RATIO_18_1
@@ -87,7 +87,7 @@ front_right_motor_inverted = True
 rear_right_motor_inverted = True
 rear_left_motor_inverted = False
 encoder_ticks_per_rotation = 360  # Green: 360
-drivetrain_rotation_offset = -pi / 4
+drivetrain_rotation_offset = 0
 drivetrain_slip_coefficients = {
     pi * 0: 0,
     pi * -0.25: 0.9239,
