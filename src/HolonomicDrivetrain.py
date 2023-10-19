@@ -58,7 +58,6 @@ class Drivetrain:
 
         self._movement_allowed_error = Constants.drivetrain_allowed_positional_error_cm
         self._wheel_circumference_cm = Constants.wheel_circumference_cm
-        self._driver_control_deadzone = Constants.driver_control_deadzone
         self.rotation_PID = PIDController(
             self.timer,
             Constants.drivetrain_turn_Kp,
@@ -85,7 +84,7 @@ class Drivetrain:
         self._rear_right_motor.spin(FORWARD)
         self._rear_left_motor.spin(FORWARD)
 
-        self.odometry = Odometry(
+        self._odometry = Odometry(
             self._front_left_motor,
             self._front_right_motor,
             self._rear_right_motor,
@@ -100,36 +99,46 @@ class Drivetrain:
         while self._inertial.is_calibrating():
             wait(5, MSEC)
 
-    def move_to_position(self, target_position, maximum_speed: float) -> None:
+    def move_to_position(self, target_position, speed: float) -> None:
         """
         Move to the specified position
         :param target_position: The position to mave to
         :type target_position: tuple[float, float]
-        :param maximum_speed: The maximum speed between zero and one for the robot during the move
-        :type maximum_speed: float
+        :param speed: The speed (0-1) for the move
+        :type speed: float
         """
+        # Ensure the drivetrain doesn't jerk when we start the move
+        self.clear_direction_PID_output()
+        self.stop()
+
+        # Set the target_x and target_y from the target position
         self._current_target_x_cm, self._current_target_y_cm = target_position
+
+        # While the distance between our current position and our target position is greater than tha allowed movement error
+        # continuously calculate the direction we need to travel to reach the target and the remaining distance
         while (
             hypotenuse(
-                target_position[0] - self.odometry.x,
-                target_position[1] - self.odometry.y,
+                target_position[0] - self._odometry.x,
+                target_position[1] - self._odometry.y,
             )
             > self._movement_allowed_error
         ):
             # Calculate the direction to move in the reach the target
             direction_rad = math.atan2(
-                self._current_target_y_cm - self.odometry.y,
-                self._current_target_x_cm - self.odometry.x,
+                self._current_target_y_cm - self._odometry.y,
+                self._current_target_x_cm - self._odometry.x,
             )
 
             # calculate the remaining distance to move
             # TODO: use distance_cm for trapezoidal movement profiling
             distance_cm = hypotenuse(
-                self._current_target_x_cm - self.odometry.x,
-                self._current_target_y_cm - self.odometry.y,
+                self._current_target_x_cm - self._odometry.x,
+                self._current_target_y_cm - self._odometry.y,
             )
 
-            self.move_headless(direction_rad, maximum_speed)
+            # Update the rotation PID to keep us facing the same direction throughout the move
+            self.update_direction_PID()
+            self.move_headless(direction_rad, speed, 0)
         self.stop()
 
     def follow_path(self, point_list, maximum_speed):
@@ -174,50 +183,47 @@ class Drivetrain:
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
-    def move(self, direction, speed, spin=None) -> None:
-        if spin is None:
-            spin = self._rotation_PID_output
-        speed = clamp(speed, 0, 1)
-        self._front_left_motor.set_velocity(
-            (
-                calculate_wheel_power(
-                    direction, speed, self._front_left_wheel_rotation_rad
-                )
-                - (-spin if Constants.front_left_motor_inverted else spin)
-            )
-            * 100,
-            PERCENT,
+    def move(self, direction, speed, spin) -> None:
+        spin += self._rotation_PID_output
+        speed = clamp(speed, 0, 1)  # This will ensure that speed is between 0 and 1
+        spin = clamp(spin, -1, 1)  # This will ensure that speed is between -1 and 1
+
+        target_front_left_wheel_speed = calculate_wheel_power(
+            direction, speed, self._front_left_wheel_rotation_rad
+        ) + (spin if Constants.front_left_motor_inverted else -spin)
+        target_front_right_wheel_speed = calculate_wheel_power(
+            direction, speed, self._front_right_wheel_rotation_rad
+        ) + (spin if Constants.front_right_motor_inverted else -spin)
+        target_rear_left_wheel_speed = calculate_wheel_power(
+            direction, speed, self._rear_left_wheel_rotation_rad
+        ) + (spin if Constants.rear_left_motor_inverted else -spin)
+        target_rear_right_wheel_speed = calculate_wheel_power(
+            direction, speed, self._rear_right_wheel_rotation_rad
+        ) + (spin if Constants.rear_right_motor_inverted else -spin)
+
+        maximum_power = max(
+            target_front_left_wheel_speed,
+            target_front_right_wheel_speed,
+            target_rear_left_wheel_speed,
+            target_rear_right_wheel_speed,
         )
-        self._front_right_motor.set_velocity(
-            (
-                calculate_wheel_power(
-                    direction, speed, self._front_right_wheel_rotation_rad
-                )
-                - (-spin if Constants.front_right_motor_inverted else spin)
-            )
-            * 100,
-            PERCENT,
-        )
-        self._rear_right_motor.set_velocity(
-            (
-                calculate_wheel_power(
-                    direction, speed, self._rear_right_wheel_rotation_rad
-                )
-                - (-spin if Constants.rear_right_motor_inverted else spin)
-            )
-            * 100,
-            PERCENT,
-        )
-        self._rear_left_motor.set_velocity(
-            (
-                calculate_wheel_power(
-                    direction, speed, self._rear_left_wheel_rotation_rad
-                )
-                - (-spin if Constants.rear_left_motor_inverted else spin)
-            )
-            * 100,
-            PERCENT,
-        )
+
+        if maximum_power > 1:
+            # At least one of the motor velocities are over the maximum possible velocity
+            # This will result in clipping, meaning that the motor speeds will be "clipped" off to the maximum (1)
+            # We will lose some control of our turning while we are moving quickly
+            # To solve this issue we can detect if any motor velocities exceed the maximum possible velocity and
+            # Use the inverse of the maximum motor power as a salar by dividing by it.
+            # This wil always output all values in a range from 0-1
+            target_front_left_wheel_speed /= maximum_power
+            target_front_right_wheel_speed /= maximum_power
+            target_rear_left_wheel_speed /= maximum_power
+            target_rear_right_wheel_speed /= maximum_power
+
+        self._front_left_motor.set_velocity(target_front_left_wheel_speed * 100)
+        self._front_right_motor.set_velocity(target_front_right_wheel_speed * 100)
+        self._rear_right_motor.set_velocity(target_rear_right_wheel_speed * 100)
+        self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 100)
 
     def calculate_optimal_turn(self, target_heading):
         # Calculate the angular difference
@@ -236,28 +242,35 @@ class Drivetrain:
 
     def turn_to_face_position(self, position):
         direction_to_point = (
-            math.atan2(self.odometry.y - position[1], self.odometry.x - position[0])
+            math.atan2(self._odometry.y - position[1], self._odometry.x - position[0])
             + math.pi / 2
-        )  # We add math.pi / 2 because on the drivetrain 0 degrees is actually on the right. This means we must shift our atan calculation
+        )
+        # We add math.pi / 2  to direction_to_point because on the drivetrain 0 degrees is actually on the right. This means we must shift our atan2 calculation
+        # in order to point the front of the robot towards the target
         self.turn_to_face_heading(direction_to_point)
 
     def turn_to_face_heading(self, heading_rad):
+        # Calculate the optimal turn, this will return a number between -pi and pi
+        # that the drivetrain should rotate in order to end facing the correct direction
         angular_difference = self.calculate_optimal_turn(heading_rad)
         self.rotation_PID.setpoint += angular_difference
 
     def stop(self):
-        self.move(0, 0)
+        self.move(0, 0, 0)
 
-    def move_headless(self, direction, magnitude, spin=None):
+    def move_headless(self, direction, magnitude, spin):
         direction -= (
-            self.odometry.rotation_rad
+            self._odometry.rotation_rad
         )  # Factor out the robot's current rotation from the desired direction
         self.move(direction, magnitude, spin)
 
     def update_direction_PID(self):
         self._rotation_PID_output = self.rotation_PID.update(
-            self.odometry.rotation_rad
+            self._odometry.rotation_rad
         )
+
+    def clear_direction_PID_output(self):
+        self._rotation_PID_output = 0
 
     def reset(self) -> None:
         """
@@ -278,7 +291,7 @@ class Drivetrain:
         self._current_target_direction = 0
         self._current_target_x_cm = 0
         self._current_target_y_cm = 0
-        self.odometry.reset()
+        self._odometry.reset()
 
     @property
     def target_position(self) -> tuple:
@@ -297,6 +310,24 @@ class Drivetrain:
         :type position: tuple[float, float]
         """
         self._current_target_x_cm, self._current_target_y_cm = position
+
+    @property
+    def current_position(self):
+        return self._odometry.position
+
+    @current_position.setter
+    def current_position(self, position):
+        # When setting the position, it is automatically set as the targeted position
+        self._odometry.position = position
+        self._current_target_x_cm, self._current_target_y_cm = position
+
+    @property
+    def current_direction_rad(self):
+        return self._odometry.rotation_rad
+
+    @current_direction_rad.setter
+    def current_direction_rad(self, rotation_rad):
+        self._odometry.rotation_rad = rotation_rad
 
     @property
     def target_heading_rad(self) -> float:

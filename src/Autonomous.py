@@ -34,12 +34,12 @@ class SkillsAutonomous(AutonomousRoutine):
         self.log("Drivetrain reset")
 
         # Set the robot's starting position
-        self.drivetrain.odometry.position = (0, 0)
+        self.drivetrain._odometry.position = (0, 0)
         self.log(
             "Robot is at: ("
-            + str(self.drivetrain.odometry.x)
+            + str(self.drivetrain._odometry.x)
             + ", "
-            + str(self.drivetrain.odometry.y)
+            + str(self.drivetrain._odometry.y)
             + ")"
         )
 
