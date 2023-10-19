@@ -10,7 +10,7 @@ Usage:
 heap = []            # creates an empty heap
 heappush(heap, item) # pushes a new item on the heap
 item = heappop(heap) # pops the smallest item from the heap
-item = heap[0]       # smallest item on the heap without popping it
+item = heap[0]       # gets the smallest item on the heap without popping it
 heapify(x)           # transforms list into a heap, in-place, in linear time
 item = heappushpop(heap, item) # pushes a new item and then returns
                                # the smallest item; the heap size is unchanged
@@ -220,10 +220,10 @@ def _siftdown(heap, startpos, pos):
 
 # The child indices of heap index pos are already heaps, and we want to make
 # a heap at index pos too.  We do this by bubbling the smaller child of
-# pos up (and so on with that child's children, etc) until hitting a leaf,
+# pos up (and so on with that child's children, etc.) until hitting a leaf,
 # then using _siftdown to move the oddball originally at index pos into place.
 #
-# We *could* break out of the loop as soon as we find a pos where newitem <=
+# We *could* break out of the loop as soon as we find a pos where new item <=
 # both its children, but turns out that's not a good idea, and despite that
 # many books write the algorithm that way.  During a heap pop, the last array
 # element is sifted in, and that tends to be large, so that comparing it
