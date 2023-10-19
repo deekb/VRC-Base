@@ -50,6 +50,8 @@ class Robot:
         self.autonomous_threads = []
         self.setup_complete = False
 
+        self.disable_driver_control = False
+
         self.autonomous_task = None
 
         self.drivetrain = Drivetrain(timer=self.brain.timer, terminal=self.terminal)
@@ -81,32 +83,32 @@ class Robot:
         while not self.setup_complete:
             wait(5)
         while True:
-            # The joysticks report outputs in the range -100 to 100, but it is easier to do math on inputs in the range
-            # 0 to 1, so we multiply the inputs by 0.01 (same as dividing by 100 but slightly more computationally efficient)
-            left_stick = (
-                self.primary_controller.axis4.position() * 0.01,
-                self.primary_controller.axis3.position() * 0.01,
-            )
-            right_stick = (
-                self.primary_controller.axis1.position() * 0.01,
-                self.primary_controller.axis1.position() * 0.01,
-            )
+            if not self.disable_driver_control:
+                # The joysticks report outputs in the range -100 to 100, but it is easier to do math on inputs in the range
+                # 0 to 1, so we multiply the inputs by 0.01 (same as dividing by 100 but slightly more computationally efficient)
+                left_stick = (
+                    clamp(self.primary_controller.axis4.position() * 0.01, -1, 1),
+                    clamp(self.primary_controller.axis3.position() * 0.01, -1, 1),
+                )
+                right_stick = (
+                    clamp(self.primary_controller.axis1.position() * 0.01, -1, 1),
+                    clamp(self.primary_controller.axis1.position() * 0.01, -1, 1),
+                )
 
-            movement_direction = math.atan2(left_stick[1], left_stick[0])
+                movement_direction = math.atan2(left_stick[1], left_stick[0])
 
-            movement_speed = hypotenuse(left_stick[0], left_stick[1])
+                movement_speed = hypotenuse(left_stick[0], left_stick[1])
 
-            # Apply a deadzone to the turning amount
-            deadzoned_right_x = apply_deadzone(
-                right_stick[0], Constants.turn_deadzone, 1
-            )
+                # Apply a deadzone to the turning amount
+                deadzoned_right_x = apply_deadzone(
+                    right_stick[0], Constants.turn_deadzone, 1
+                )
 
-            # Normalize the turning amount across a cubic curve
-            normalized_right_x = cubic_filter(
-                deadzoned_right_x, Constants.turn_cubic_linearity
-            )
+                # Normalize the turning amount across a cubic curve
+                normalized_right_x = cubic_filter(
+                    deadzoned_right_x, Constants.turn_cubic_linearity
+                )
 
-            if Constants.headless_mode:
                 if abs(normalized_right_x) > 0:
                     # The driver is attempting to turn manually
                     # Clear the PID output
@@ -129,6 +131,13 @@ class Robot:
                         movement_direction, movement_speed, -normalized_right_x
                     )
 
+                if self.primary_controller.buttonL1.pressing():
+                    self.intake.pull_in()
+                elif self.primary_controller.buttonR1.pressing():
+                    self.intake.spit_out()
+                else:
+                    self.intake.stop()
+
             wait(5, MSEC)
 
     def debug_thread(self):
@@ -138,12 +147,16 @@ class Robot:
                 if self.primary_controller.buttonA.pressing():
                     self.drivetrain.reset()
                 if self.primary_controller.buttonB.pressing():
-                    self.drivetrain.follow_path(
-                        [(0, 0), (100, 0), (100, 100), (0, 0)], 0.4
+                    self.disable_driver_control = True
+                    self.drivetrain.move(math.pi, 0.5, 0)
+                    wait(1000, MSEC)
+                    # Clear the PID output
+                    self.drivetrain.clear_direction_PID_output()
+                    # And set the current direction as the target direction
+                    self.drivetrain.rotation_PID.setpoint = (
+                        self.drivetrain.current_direction_rad
                     )
-                    self.drivetrain.follow_path(
-                        [(0, 0), (0, 100), (100, 100), (100, 0), (0, 0)], 0.4
-                    )
+                    self.disable_driver_control = False
 
     def display_thread(self):
         # Runs as a background thread during driver control to display information about the robot on the screen
@@ -243,7 +256,6 @@ class Robot:
         """
         Run when the robot boots up, after the setup process, sets up controller button callbacks
         """
-        ...
         # self.primary_controller.buttonL1.pressed(
         #     lambda: setattr(self.drivetrain, "target_heading_deg", 0)
         # )
