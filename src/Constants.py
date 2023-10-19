@@ -58,7 +58,7 @@ class IntakeState:
 
 
 """Sensors"""
-inertial_sensor_port = Ports.PORT5
+inertial_sensor_port = Ports.PORT12
 
 
 """Intake"""
@@ -87,7 +87,7 @@ front_right_motor_inverted = True
 rear_right_motor_inverted = True
 rear_left_motor_inverted = False
 encoder_ticks_per_rotation = 360  # Green: 360
-drivetrain_rotation_offset = 0
+drivetrain_rotation_offset = -pi / 4
 drivetrain_slip_coefficients = {
     pi * 0: 0,
     pi * -0.25: 0.9239,
@@ -133,13 +133,14 @@ A note on headless mode:
     
     It does take a little getting used to: Good luck :)
 """
-driver_control_headless = True
-driver_control_turn_speed_rad_per_second = 6
-driver_control_deadzone = 0.1
+headless_mode = True
+movement_deadzone = 0.1
+turn_deadzone = 0.1
 turn_cubic_linearity = 0.4
 movement_cubic_linearity = 0.4
 
-PID_turning = False
+skip_setup = True
+
 
 font_size = FontType.MONO12
 
@@ -156,7 +157,7 @@ phosphorus_bmp_size_x = 37
 phosphorus_bmp_size_y = 37
 
 robot_start_position = (field_x_size / 2, field_y_size / 2)
-robot_start_rotation_deg = 0
+robot_start_rotation_deg = -90
 drivetrain_braking = True
 
 log_directory = "/logs/"
