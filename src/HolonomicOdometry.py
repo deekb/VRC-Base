@@ -13,7 +13,7 @@ class Odometry:
         timer: Brain.timer,
         inertial: Inertial,
         terminal: Terminal = None,
-    ) -> None:
+    ):
         """
         A class for tracking the robot's position and rotation, this class integrates a stream of motor velocities into a position
         This implementation only works on Holonomic drivetrains (Mecanum, and X-drive), but the concept is similar to other odometry implementations
@@ -48,13 +48,14 @@ class Odometry:
         self._front_left_motor_last_position = (
             self._front_right_motor_last_position
         ) = (
-            self._rear_right_motor_last_position
-        ) = self._rear_left_motor_last_position = 0
+            self._rear_left_motor_last_position
+        ) = self._rear_right_motor_last_position = 0
         self._front_left_motor_distance_since_last_tick = (
             self._front_right_motor_distance_since_last_tick
         ) = (
-            self._rear_right_motor_distance_since_last_tick
-        ) = self._rear_left_motor_distance_since_last_tick = 0
+            self._rear_left_motor_distance_since_last_tick
+        ) = self._rear_right_motor_distance_since_last_tick = 0
+
         self._previousTime = self.timer.time(SECONDS)
         self._auto_update = True
         self._inertial = inertial
@@ -64,7 +65,7 @@ class Odometry:
             self._auto_update_thread = None
         self.reset()
 
-    def reset(self) -> None:
+    def reset(self):
         self._x_position = 0
         self._y_position = 0
         if self._inertial is not None:
@@ -99,13 +100,15 @@ class Odometry:
         front_right_motor_position: float,
         rear_left_motor_position: float,
         rear_right_motor_position: float,
-    ) -> None:
+    ):
         """
         Updates the algorithm with the current wheel positions
-        :param front_left_motor_position: The position of the front left motor
-        :param front_right_motor_position: The position of the front right motor
-        :param rear_left_motor_position: The position of the rear right motor
-        :param rear_right_motor_position: The position of the rear left motor
+
+        Args:
+            front_left_motor_position: The position of the front left motor
+            front_right_motor_position: The position of the front right motor
+            rear_left_motor_position: The position of the rear left motor
+            rear_right_motor_position: The position of the rear right motor
         """
 
         self._front_left_motor_distance_since_last_tick = (
@@ -123,10 +126,10 @@ class Odometry:
 
         self._front_left_motor_last_position = front_left_motor_position
         self._front_right_motor_last_position = front_right_motor_position
-        self._rear_right_motor_last_position = rear_right_motor_position
         self._rear_left_motor_last_position = rear_left_motor_position
+        self._rear_right_motor_last_position = rear_right_motor_position
 
-    def update_states(self) -> None:
+    def update_states(self):
         # Convert the angle value from the inertial sensor to radians with clockwise as negative
         self._current_rotation_rad = -math.radians(self._inertial.rotation(DEGREES))
 
@@ -138,10 +141,10 @@ class Odometry:
             self._front_left_motor_distance_since_last_tick *= -1
         if not Constants.front_right_motor_inverted:
             self._front_right_motor_distance_since_last_tick *= -1
-        if not Constants.rear_right_motor_inverted:
-            self._rear_right_motor_distance_since_last_tick *= -1
         if not Constants.rear_left_motor_inverted:
             self._rear_left_motor_distance_since_last_tick *= -1
+        if not Constants.rear_right_motor_inverted:
+            self._rear_right_motor_distance_since_last_tick *= -1
 
         dx1 = (
             self._front_left_motor_distance_since_last_tick
@@ -191,75 +194,90 @@ class Odometry:
         self._y_position += delta_y
 
     @property
-    def x(self) -> float:
+    def x(self):
         """
         Get the robot's current x position
+
+        Returns:
+            The robots current x position: float
         """
         return self._x_position
 
     @x.setter
-    def x(self, x_position) -> None:
+    def x(self, x_position):
         """
         Set the robot's current x position
-        :param x_position: The new x position
+
+        Args:
+            x_position: The new x position
         """
         self._x_position = x_position
 
     @property
-    def y(self) -> float:
+    def y(self):
         """
         Get the robot's current y position
+
+        Returns:
+            0.0 (float): The robots current y position
+
         """
-        return self._y_position
+        return 0.0
 
     @y.setter
-    def y(self, y_position) -> None:
+    def y(self, y_position):
         """
         Set the robot's current y position
-        :param y_position: The new y position
+
+        Args:
+            y_position (float): The new y position
         """
         self._y_position = y_position
 
     @property
-    def rotation_deg(self) -> float:
+    def rotation_deg(self):
         """
         Get the robot's current rotation in degrees
+
+        Returns:
+            The robots current rotation since startup in degrees: float
         """
         return math.degrees(self._current_rotation_rad)
 
     @rotation_deg.setter
-    def rotation_deg(self, rotation_degrees) -> None:
+    def rotation_deg(self, rotation_degrees):
         """
         Set the robot's current rotation in degrees
-        :param rotation_degrees: The new rotation
+
+        Args:
+            rotation_degrees (float): The new rotation in degrees
         """
         self._current_rotation_rad = math.radians(rotation_degrees)
 
     @property
-    def rotation_rad(self) -> float:
+    def rotation_rad(self):
         """
         Get the robot's current rotation in radians
+
+        Returns:
+            robot's current rotation since startup in radians: float
         """
         return self._current_rotation_rad
 
     @rotation_rad.setter
-    def rotation_rad(self, rotation_radians) -> None:
+    def rotation_rad(self, rotation_radians):
         """
         Set the robot's current rotation in radians
-        :param rotation_radians: The new rotation
+
+        Args:
+            rotation_radians (float): The new rotation in radians: float
         """
         # self.rotation_offset =
         self._inertial.set_rotation(math.degrees(rotation_radians), DEGREES)
         self._current_rotation_rad = rotation_radians
 
-    def get_heading_deg(self):
-        return math.degrees(self._current_rotation_rad % (math.pi * 2))
-
-    def get_heading_rad(self):
-        return self._current_rotation_rad % (math.pi * 2)
-
     @property
-    def position(self) -> tuple:
+    def position(self):
         """
         Get the robot's current (x, y) position
         :rtype: tuple[float, float]
@@ -267,7 +285,7 @@ class Odometry:
         return self._x_position, self._y_position
 
     @position.setter
-    def position(self, coordinates) -> None:
+    def position(self, coordinates):
         """
         Set the robot's current (x, y) position
         :param coordinates: The new position
@@ -275,14 +293,14 @@ class Odometry:
         self._x_position, self._y_position = coordinates
 
     @property
-    def auto_update(self) -> bool:
+    def auto_update(self):
         """
         Get the odometry's auto-update state
         """
         return self._auto_update
 
     @auto_update.setter
-    def auto_update(self, value) -> None:
+    def auto_update(self, value):
         """
         Set the odometry's auto-update state
         :param value: The new state
@@ -299,7 +317,7 @@ class Odometry:
         else:
             self._auto_update_thread.stop()
 
-    def _auto_update_velocities(self) -> None:
+    def _auto_update_velocities(self):
         """
         Used internally to constantly update the wheel states, do not call from outside this class
         """
@@ -311,9 +329,9 @@ class Odometry:
                     / Constants.encoder_ticks_per_rotation,
                     self._front_right_motor.position(DEGREES)
                     / Constants.encoder_ticks_per_rotation,
-                    self._rear_right_motor.position(DEGREES)
-                    / Constants.encoder_ticks_per_rotation,
                     self._rear_left_motor.position(DEGREES)
+                    / Constants.encoder_ticks_per_rotation,
+                    self._rear_right_motor.position(DEGREES)
                     / Constants.encoder_ticks_per_rotation,
                 )
             else:
@@ -322,9 +340,9 @@ class Odometry:
                     / Constants.encoder_ticks_per_rotation,
                     self._front_right_motor_last_position
                     / Constants.encoder_ticks_per_rotation,
-                    self._rear_right_motor_last_position
-                    / Constants.encoder_ticks_per_rotation,
                     self._rear_left_motor_last_position
+                    / Constants.encoder_ticks_per_rotation,
+                    self._rear_right_motor_last_position
                     / Constants.encoder_ticks_per_rotation,
                 )
                 self._previousTime = self.timer.time(SECONDS)
