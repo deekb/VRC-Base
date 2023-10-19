@@ -182,6 +182,7 @@ class Odometry:
                     self._slip_coefficients[next_element],
                     direction,
                 )
+                self.print("Movement scalar: " + str(scalar))
                 delta_x *= scalar
                 delta_y *= scalar
                 break
@@ -247,6 +248,8 @@ class Odometry:
         Set the robot's current rotation in radians
         :param rotation_radians: The new rotation
         """
+        # self.rotation_offset =
+        self._inertial.set_rotation(math.degrees(rotation_radians), DEGREES)
         self._current_rotation_rad = rotation_radians
 
     def get_heading_deg(self):
