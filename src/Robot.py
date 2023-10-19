@@ -56,8 +56,6 @@ class Robot:
 
         self.intake = Intake()
 
-        self.drivetrain.odometry.position = Constants.robot_start_position
-        self.drivetrain.odometry.rotation_deg = Constants.robot_start_rotation_deg
         self.drivetrain.set_braking(Constants.drivetrain_braking)
 
         # Register the competition handler
@@ -83,6 +81,8 @@ class Robot:
         while not self.setup_complete:
             wait(5)
         while True:
+            # The joysticks report outputs in the range -100 to 100, but it is easier to do math on inputs in the range
+            # 0 to 1, so we multiply the inputs by 0.01 (same as dividing by 100 but slightly more computationally efficient)
             left_stick = (
                 self.primary_controller.axis4.position() * 0.01,
                 self.primary_controller.axis3.position() * 0.01,
@@ -94,33 +94,45 @@ class Robot:
 
             movement_direction = math.atan2(left_stick[1], left_stick[0])
 
-            # Normalize the turning amount across a cubic curve
-            normalized_right_x = cubic_filter(
-                right_stick[0], Constants.turn_cubic_linearity
+            movement_speed = hypotenuse(left_stick[0], left_stick[1])
+
+            # Apply a deadzone to the turning amount
+            deadzoned_right_x = apply_deadzone(
+                right_stick[0], Constants.turn_deadzone, 1
             )
 
-            # The line below uses -= because the PID direction is in positive counterclockwise
-            self.drivetrain.rotation_PID.setpoint = self.drivetrain.odometry.current_heading_rad
+            # Normalize the turning amount across a cubic curve
+            normalized_right_x = cubic_filter(
+                deadzoned_right_x, Constants.turn_cubic_linearity
+            )
 
-            magnitude = hypotenuse(left_stick[0], left_stick[1])
-
-            if Constants.driver_control_headless:
-                if Constants.PID_turning:
-                    self.drivetrain.move_headless(movement_direction, magnitude)
-                else:
-                    self.drivetrain.move_headless(
-                        movement_direction, magnitude, -normalized_right_x
+            if Constants.headless_mode:
+                if abs(normalized_right_x) > 0:
+                    # The driver is attempting to turn manually
+                    # Clear the PID output
+                    self.drivetrain.clear_direction_PID_output()
+                    # And set the current direction as the target direction
+                    self.drivetrain.rotation_PID.setpoint = (
+                        self.drivetrain.current_direction_rad
                     )
-            else:
-                if Constants.PID_turning:
-                    self.drivetrain.move(movement_direction, magnitude)
                 else:
-                    self.drivetrain.move(movement_direction, magnitude, -normalized_right_x)
+                    # The driver is not trying to manually turn
+                    # update the drivetrains internal PID to hold direction
+                    self.drivetrain.update_direction_PID()
 
-            self.drivetrain.update_direction_PID()
+                if Constants.headless_mode:
+                    self.drivetrain.move_headless(
+                        movement_direction, movement_speed, -normalized_right_x
+                    )
+                else:
+                    self.drivetrain.move(
+                        movement_direction, movement_speed, -normalized_right_x
+                    )
+
             wait(5, MSEC)
 
     def debug_thread(self):
+        # Runs as a background thread during driver control to provide debugging functionality
         while True:
             if self.setup_complete:
                 if self.primary_controller.buttonA.pressing():
@@ -134,7 +146,17 @@ class Robot:
                     )
 
     def display_thread(self):
-        def field_coordinates_to_screen(position):
+        # Runs as a background thread during driver control to display information about the robot on the screen
+        def field_coordinates_to_screen_coordinates(position):
+            """
+            Convert x,y coordinates from the field (0,0 at bottom left) to the screen (0,0 at top left)
+
+            Args:
+                position: The position to convert
+
+            Returns:
+                The converted position
+            """
             x, y = position
             x *= (Constants.screen_size_x / 2) / Constants.field_x_size
             y *= Constants.screen_size_y / Constants.field_y_size
@@ -151,10 +173,10 @@ class Robot:
                 Constants.deploy_directory + "Field.png", 240, 0
             )
 
-            current_x, current_y = field_coordinates_to_screen(
-                self.drivetrain.odometry.position
+            current_x, current_y = field_coordinates_to_screen_coordinates(
+                self.drivetrain.current_position
             )
-            target_x, target_y = field_coordinates_to_screen(
+            target_x, target_y = field_coordinates_to_screen_coordinates(
                 self.drivetrain.target_position
             )
 
@@ -176,7 +198,9 @@ class Robot:
 
     def autonomous_handler(self):
         """
-        Coordinate when to run the autonomous function(s)
+        This function is run by the competition handler "self.competition" whenever the controller is connected and
+        either no competition switch is connected, or the competition switch connected to the controller is set to
+        "autonomous enabled"
         """
         while not self.setup_complete and (
             self.competition.is_autonomous() and self.competition.is_enabled()
@@ -194,7 +218,8 @@ class Robot:
 
     def driver_handler(self):
         """
-        Coordinate when to run the driver function(s)
+        This function is run by the competition handler "self.competition" whenever the controller and competition
+        switch are connected and set to "driver control enabled"
         """
         while not self.setup_complete and (
             self.competition.is_driver_control() and self.competition.is_enabled()
@@ -215,6 +240,9 @@ class Robot:
         self.print("Stopped all driver control tasks")
 
     def setup_controller_bindings(self):
+        """
+        Run when the robot boots up, after the setup process, sets up controller button callbacks
+        """
         ...
         # self.primary_controller.buttonL1.pressed(
         #     lambda: setattr(self.drivetrain, "target_heading_deg", 0)
@@ -230,16 +258,27 @@ class Robot:
         # )
 
     def main(self):
-        setup_ui = SetupUI(self.terminal, self.brain.screen)
+        """
+        initializes and sets up the robot, including calibrating sensors, selecting an autonomous routine, and setting
+        a startup position for the robot
+        """
+        if not Constants.skip_setup:
+            setup_ui = SetupUI(self.terminal, self.brain.screen)
 
-        while not setup_ui.finished:
-            wait(10, MSEC)
-            setup_ui.tick()
+            while not setup_ui.finished:
+                wait(10, MSEC)
+                setup_ui.tick()
 
         self.brain.screen.set_fill_color(Color.TRANSPARENT)
         self.brain.screen.set_pen_color(Color.WHITE)
 
         self.drivetrain.calibrate_inertial_sensor()
+
+        # Ensure you set the direction of the robot after the inertial sensor is calibrated or calibrating will wipe your setting
+        self.drivetrain.current_position = Constants.robot_start_position
+        self.drivetrain.current_direction_rad = math.radians(
+            Constants.robot_start_rotation_deg
+        )
 
         # Set up controller callbacks here to avoid triggering them by pressing buttons during setup
         self.setup_controller_bindings()
