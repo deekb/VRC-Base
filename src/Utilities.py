@@ -91,8 +91,11 @@ def apply_deadzone(value: float, deadzone: float, maximum: float) -> float:
 
     if abs(value) < deadzone:
         return 0
-    else:
+
+    if value > 0:
         return maximum / (maximum - deadzone) * (value - deadzone)
+    else:
+        return maximum / (maximum - deadzone) * (value + deadzone)
 
 
 class MotorPID:
@@ -101,8 +104,16 @@ class MotorPID:
     **Waring, this class disables all motor functionality except the following functions:[set_velocity, set_stopping, stop, spin, velocity]**
     """
 
-    def __init__(self, timer: Brain.timer, motor_object, kp: float = 0.4, ki: float = 0.01, kd: float = 0.05, t: float = 0.1):
-        """"
+    def __init__(
+        self,
+        timer: Brain.timer,
+        motor_object,
+        kp: float = 0.4,
+        ki: float = 0.01,
+        kd: float = 0.05,
+        t: float = 0.1,
+    ):
+        """ "
         Creates an instance of the MotorPID
 
         Args:
@@ -509,4 +520,4 @@ def cubic_filter(value, linearity=0) -> float:
     if isinf(linearity):
         raise ValueError("Linearity may not be infinite")
 
-    return (value**3 + linearity * value) / (1 + linearity)
+    return ((value**3) + linearity * value) / (1 + linearity)
