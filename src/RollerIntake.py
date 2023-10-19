@@ -56,4 +56,4 @@ class Intake:
                     self._set_velocity(-50)
                 elif self.state == Constants.IntakeState.off:
                     self._set_velocity(0)
-                wait(100, MSEC)
+            wait(100, MSEC)
