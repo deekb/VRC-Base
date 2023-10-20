@@ -219,10 +219,10 @@ class Odometry:
         Get the robot's current y position
 
         Returns:
-            0.0 (float): The robots current y position
+            y_position (float): The robots current y position
 
         """
-        return 0.0
+        return self._y_position
 
     @y.setter
     def y(self, y_position):
@@ -252,6 +252,7 @@ class Odometry:
         Args:
             rotation_degrees (float): The new rotation in degrees
         """
+        self._inertial.set_rotation(rotation_degrees, DEGREES)
         self._current_rotation_rad = math.radians(rotation_degrees)
 
     @property
