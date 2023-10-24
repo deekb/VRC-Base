@@ -110,8 +110,8 @@ drivetrain_slip_coefficients = {
 # }
 front_left_wheel_rotation_rad = pi / 4
 front_right_wheel_rotation_rad = pi / 4 + pi / 2
-rear_right_wheel_rotation_rad = pi / 4
 rear_left_wheel_rotation_rad = pi / 4 + pi / 2
+rear_right_wheel_rotation_rad = pi / 4
 
 # For tuning the rotation PID gains, please refer to the "Tuning a PID controller" section of Utilities.md
 drivetrain_turn_Kp = 1.75 * 0.4
@@ -166,8 +166,8 @@ button_size_y = 50
 phosphorus_bmp_size_x = 37
 phosphorus_bmp_size_y = 37
 
-robot_start_position = (field_x_size / 2, field_y_size / 2)
-robot_start_rotation_deg = -90
+robot_start_position = 0, 0  # (field_x_size / 2, field_y_size / 2)
+robot_start_rotation_deg = 0  # -90
 drivetrain_braking = True
 
 log_directory = "/logs/"
