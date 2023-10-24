@@ -54,12 +54,8 @@ class TestCalculateWheelPower(TestCase):
         self.assertAlmostEqual(result, 0.0)
 
     def test_negative_movement_speed(self):
-        # Test with negative movement_speed, should return a negative value
-        result = calculate_wheel_power(math.radians(0), 1.0, math.radians(180))
-        self.assertAlmostEqual(result, -1.0)
-        result = calculate_wheel_power(math.radians(45), 1.0, math.radians(225))
-        self.assertAlmostEqual(result, -1.0)
-        result = calculate_wheel_power(math.radians(90), 1.0, math.radians(270))
-        self.assertAlmostEqual(result, -1.0)
-        result = calculate_wheel_power(math.radians(135), 1.0, math.radians(315))
-        self.assertAlmostEqual(result, -1.0)
+        # Test with negative movement_speed, should raise a ValueError
+        self.assertRaises(ValueError, calculate_wheel_power, math.radians(0), -1.0, math.radians(0))
+        self.assertRaises(ValueError, calculate_wheel_power, math.radians(45), -1.0, math.radians(45))
+        self.assertRaises(ValueError, calculate_wheel_power, math.radians(90), -1.0, math.radians(90))
+        self.assertRaises(ValueError, calculate_wheel_power, math.radians(180), -1.0, math.radians(180))
