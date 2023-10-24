@@ -6,7 +6,7 @@ from vex import *
 class Terminal:
     def __init__(self, brain):
         self.brain = brain
-        self.log = Logging("Terminal", terminal=self)
+        self.log = Logging("Terminal")
         self.brain.screen.set_font(font_size)
 
     def clear(self):
@@ -320,28 +320,19 @@ class PIDController:
         return self._control_output
 
 
-class Logging(object):
+class Logging:
     """
     A log that can buffer it's output and when a Micro-SD card is present, can store the buffer in the Mico-SD card
     """
 
-    def __init__(self, log_name, flush_interval=3, terminal=None):
+    def __init__(self, log_name, flush_interval=3):
         """
         Logging initializer
 
         Args:
             log_name: The name to use for the log, logs will be placed in the "logs" directory on the Micro-SD card, make sure to create this directory or logs will be unable to save
             flush_interval: How often (in seconds) to flush the log buffer to the Micro-SD card
-            terminal:
         """
-
-        self.terminal = terminal
-
-        if self.terminal:
-            self.print = self.terminal.print
-            self.clear = self.terminal.clear
-        else:
-            self.print, self.clear = lambda *args, **kwargs: None
 
         self.file_name = log_directory + str(log_name) + ".log"
         self.file_object = open(
@@ -360,7 +351,7 @@ class Logging(object):
         """
 
         try:
-            self.write_queue.append(string)
+            self.write_queue.append(str(string))
         except MemoryError:
             self.write_queue.clear()
             self.log(
@@ -383,7 +374,8 @@ class Logging(object):
                     self.file_object.write(self.write_queue.pop(0))
                 self.file_object.flush()
         except OSError:
-            self.print("Failed to flush log write queue (Was the SD card removed?)")
+            # The SD card is not present
+            pass
 
     def auto_flush_logs(self, interval_sec):
         while True:
@@ -498,6 +490,9 @@ def calculate_wheel_power(
         The calculated power for the wheel
     """
 
+    if movement_speed < 0:
+        raise ValueError("Speed may not be negative")
+
     return movement_speed * cos(wheel_angle_rad - movement_angle_rad)
 
 
@@ -520,4 +515,4 @@ def cubic_filter(value, linearity=0) -> float:
     if isinf(linearity):
         raise ValueError("Linearity may not be infinite")
 
-    return ((value**3) + linearity * value) / (1 + linearity)
+    return (value**3 + linearity * value) / (1 + linearity)
