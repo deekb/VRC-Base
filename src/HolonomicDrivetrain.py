@@ -66,13 +66,10 @@ class Drivetrain:
         )
 
         self._rotation_PID_output = 0
-        self.auto_update_PID = True
 
         self._current_target_direction = 0
         self._current_target_x_cm = 0
         self._current_target_y_cm = 0
-        self._last_move_with_controller_execution_time = None
-        self._current_move_with_controller_execution_time = None
 
         self._front_left_motor.set_velocity(0, PERCENT)
         self._front_right_motor.set_velocity(0, PERCENT)
