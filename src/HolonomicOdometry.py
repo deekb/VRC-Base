@@ -163,32 +163,31 @@ class Odometry:
         delta_x = (dx1 * sin_theta) + (dy * cos_theta)
         delta_y = (dy * sin_theta) + (dx2 * cos_theta)
 
-        direction = math.atan2(delta_y, delta_x)
-
-        slip_directions = sorted(list(self._slip_coefficients.keys()))
-
-        for i in range(len(self._slip_coefficients)):
-            if i == 0:
-                previous_element = slip_directions[-1]
-            else:
-                previous_element = slip_directions[i - 1]
-            if i == len(slip_directions) - 1:
-                next_element = slip_directions[0]
-            else:
-                next_element = slip_directions[i + 1]
-
-            if previous_element < direction < next_element:
-                scalar = interpolate(
-                    previous_element,
-                    next_element,
-                    self._slip_coefficients[previous_element],
-                    self._slip_coefficients[next_element],
-                    direction,
-                )
-                # self.print("Movement scalar: " + str(scalar))
-                delta_x *= scalar
-                delta_y *= scalar
-                break
+        # direction = math.atan2(delta_y, delta_x)
+        # slip_directions = sorted(list(self._slip_coefficients.keys()))
+        #
+        # for i in range(len(self._slip_coefficients)):
+        #     if i == 0:
+        #         previous_element = slip_directions[-1]
+        #     else:
+        #         previous_element = slip_directions[i - 1]
+        #     if i == len(slip_directions) - 1:
+        #         next_element = slip_directions[0]
+        #     else:
+        #         next_element = slip_directions[i + 1]
+        #
+        #     if previous_element < direction < next_element:
+        #         scalar = interpolate(
+        #             previous_element,
+        #             next_element,
+        #             self._slip_coefficients[previous_element],
+        #             self._slip_coefficients[next_element],
+        #             direction,
+        #         )
+        #         # self.print("Movement scalar: " + str(scalar))
+        #         delta_x *= scalar
+        #         delta_y *= scalar
+        #         break
 
         self._x_position += delta_x
         self._y_position += delta_y
@@ -273,7 +272,6 @@ class Odometry:
         Args:
             rotation_radians (float): The new rotation in radians: float
         """
-        # self.rotation_offset =
         self._inertial.set_rotation(math.degrees(rotation_radians), DEGREES)
         self._current_rotation_rad = rotation_radians
 
