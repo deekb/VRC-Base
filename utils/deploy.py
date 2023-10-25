@@ -1,6 +1,7 @@
 import ast
 import hashlib
 import os
+import time
 import shutil
 import subprocess
 from glob import glob
@@ -33,6 +34,8 @@ def exclude_from_deploy(filename):
 MAIN_PROGRAM = os.path.join(SRC_DIRECTORY, "main.py")
 
 DRIVE_IDENTIFIED_STRING = "VEX"
+FIND_VEX_DISK_MAX_ATTEMPTS = 10
+FIND_VEX_DISK_TIME_BETWEEN_ATTEMPTS = 1
 VEX_BUILTIN_MODULES = [
     "micropython",
     "uasyncio.event",
@@ -80,7 +83,7 @@ def unmount_drive(drive_path):
         eject_command = (
             "powershell $driveEject = New-Object -comObject Shell.Application;"
         )
-        eject_command += f"$driveEject.Namespace(17).ParseName(\"\"\"{drive_path}\"\"\").InvokeVerb(\"\"\"Eject\"\"\")"
+        eject_command += f'$driveEject.Namespace(17).ParseName("""{drive_path}""").InvokeVerb("""Eject""")'
         subprocess.run(eject_command, check=True)
     elif ON_UNIX:
         subprocess.run(["umount", drive_path], check=True)
@@ -157,7 +160,7 @@ def detect_dependencies(file_path, available_libraries, visited=None):
                 # Ensure the imported module exists in
                 if module not in available_libraries:
                     raise ModuleNotFoundError(
-                        f"File {file_path} references module \"{module}\" but, it could not be found in {SRC_DIRECTORY}"
+                        f'File {file_path} references module "{module}" but, it could not be found in {SRC_DIRECTORY}'
                     )
                 # Recurse until no additional modules can be found
                 imported_modules.update(
@@ -210,7 +213,23 @@ def copy_libraries(libraries, directory):
 
 
 def main():
-    vex_disk = get_vex_disk()
+    failure_count = 0
+    while failure_count < FIND_VEX_DISK_MAX_ATTEMPTS - 1:
+        try:
+            vex_disk = get_vex_disk()
+            print(f"Found vex disk at {vex_disk}")
+            break  # We have found the disk
+        except FileNotFoundError:
+            vex_disk = None
+            failure_count += 1
+            print(
+                f"Could not find vex disk, retrying in {FIND_VEX_DISK_TIME_BETWEEN_ATTEMPTS} seconds... ({FIND_VEX_DISK_MAX_ATTEMPTS - failure_count} attempt(s) remaining)"
+            )
+            time.sleep(FIND_VEX_DISK_TIME_BETWEEN_ATTEMPTS)
+
+    if failure_count >= FIND_VEX_DISK_MAX_ATTEMPTS - 1:
+        raise FileNotFoundError("Could not find sd card mount point")
+
     available_libraries = get_available_modules(SRC_DIRECTORY)
 
     required_libraries = detect_dependencies(MAIN_PROGRAM, available_libraries)
@@ -221,7 +240,7 @@ def main():
         if library in available_libraries:
             libraries_to_copy[library] = available_libraries[library]
         else:
-            raise ModuleNotFoundError(f"Couldn't find library \"{library}\"")
+            raise ModuleNotFoundError(f'Couldn\'t find library "{library}"')
 
     deploy_objects = []
 
@@ -230,6 +249,7 @@ def main():
             if not exclude_from_deploy(dependency):
                 deploy_objects.append(os.path.join(DEPLOY_DIRECTORY, dependency))
 
+    print("Pushing libraries")
     # Copy all source files (main.py and it's dependencies) into the root directory
     copy_libraries(libraries_to_copy.values(), vex_disk)
     # copy all deploy objects to the "deploy" directory
@@ -238,7 +258,10 @@ def main():
     if not os.path.isdir(os.path.join(vex_disk, "logs")):
         os.mkdir(os.path.join(vex_disk, "logs"))
 
+    print("Unmounting drive")
+
     unmount_drive(vex_disk)
+    print("Safe to remove drive")
 
 
 if __name__ == "__main__":
