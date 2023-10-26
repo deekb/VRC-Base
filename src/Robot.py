@@ -109,19 +109,6 @@ class Robot:
                     deadzoned_right_x, Constants.turn_cubic_linearity
                 )
 
-                if abs(normalized_right_x) > 0:
-                    # The driver is attempting to turn manually
-                    # Clear the PID output
-                    self.drivetrain.clear_direction_PID_output()
-                    # And set the current direction as the target direction
-                    self.drivetrain.rotation_PID.setpoint = (
-                        self.drivetrain.current_direction_rad
-                    )
-                else:
-                    # The driver is not trying to manually turn
-                    # update the drivetrains internal PID to hold direction
-                    self.drivetrain.update_direction_PID()
-
                 if Constants.headless_mode:
                     self.drivetrain.move_headless(
                         movement_direction, movement_speed, -normalized_right_x
@@ -148,14 +135,18 @@ class Robot:
                     self.drivetrain.reset()
                 if self.primary_controller.buttonB.pressing():
                     self.disable_driver_control = True
-                    self.drivetrain.move(math.pi, 0.5, 0)
-                    wait(1000, MSEC)
-                    # Clear the PID output
+                    self.drivetrain.target_position = (
+                        self.drivetrain.current_position
+                    )  # set the target position to the current position
+                    self.drivetrain.move_towards_direction_for_distance(math.pi / 2, 10, 0.2)
+                    # self.drivetrain.forward(10, 0.2)
+                    # self.drivetrain.turn_to_face_heading(-math.pi / 2, True)
+                    # self.drivetrain.forward(50, 0.2)
+                    # self.drivetrain.backwards(10, 0.7)
+                    # self.drivetrain.strafe_left(10, 0.7)
+                    # self.drivetrain.strafe_right(10, 0.7)
+
                     self.drivetrain.clear_direction_PID_output()
-                    # And set the current direction as the target direction
-                    self.drivetrain.rotation_PID.setpoint = (
-                        self.drivetrain.current_direction_rad
-                    )
                     self.disable_driver_control = False
 
     def display_thread(self):
@@ -280,6 +271,8 @@ class Robot:
             while not setup_ui.finished:
                 wait(10, MSEC)
                 setup_ui.tick()
+
+            self.print("Team: " + setup_ui.team)
 
         self.brain.screen.set_fill_color(Color.TRANSPARENT)
         self.brain.screen.set_pen_color(Color.WHITE)
