@@ -28,12 +28,13 @@ DEPLOY_DIRECTORY = os.path.join(
 
 
 def exclude_from_deploy(filename):
-    return filename.endswith(".svg") or filename.endswith("~")
+    # This function tells the program which files to ignore while scanning the "deploy" directory
+    return filename.endswith(".svg") or filename.endswith("~") or filename.startswith("~")
 
 
 MAIN_PROGRAM = os.path.join(SRC_DIRECTORY, "main.py")
 
-DRIVE_IDENTIFIED_STRING = "VEX"
+DRIVE_IDENTIFIER_STRING = "VEX"
 FIND_VEX_DISK_MAX_ATTEMPTS = 10
 FIND_VEX_DISK_TIME_BETWEEN_ATTEMPTS = 1
 VEX_BUILTIN_MODULES = [
@@ -102,7 +103,7 @@ def get_vex_disk() -> str:
             if disk.fstype:
                 drive_name = win32api.GetVolumeInformation(disk.device)[0]
                 deploy_path = disk.mountpoint
-                if DRIVE_IDENTIFIED_STRING in drive_name:
+                if DRIVE_IDENTIFIER_STRING in drive_name:
                     return deploy_path
     elif ON_UNIX:
         mount_point_dir = os.path.join(os.sep, "media", os.getenv("USER"))
@@ -110,7 +111,7 @@ def get_vex_disk() -> str:
         for mount_point in mount_points:
             drive_name = os.path.basename(mount_point)
             deploy_path = os.path.join(mount_point_dir, drive_name)
-            if DRIVE_IDENTIFIED_STRING in drive_name:
+            if DRIVE_IDENTIFIER_STRING in drive_name:
                 return deploy_path
     raise FileNotFoundError("Could not find sd card mount point")
 
