@@ -51,9 +51,9 @@ class Intake:
         while True:
             if not self.manual_control:
                 if self.state == Constants.IntakeState.pull_in:
-                    self._set_velocity(50)
+                    self._set_velocity(100)
                 elif self.state == Constants.IntakeState.push_out:
-                    self._set_velocity(-50)
+                    self._set_velocity(-100)
                 elif self.state == Constants.IntakeState.off:
                     self._set_velocity(0)
             wait(100, MSEC)
