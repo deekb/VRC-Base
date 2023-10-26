@@ -153,28 +153,28 @@ class Drivetrain:
         )
 
     def forward(self, distance_cm, speed=1, field_relative=False):
-        movement_direction = 0
+        movement_direction = -math.pi / 2
         if not field_relative:
             movement_direction += self._current_target_direction
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
     def backwards(self, distance_cm, speed=1, field_relative=False):
-        movement_direction = math.pi
-        if not field_relative:
-            movement_direction += self._current_target_direction
-
-        self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
-
-    def strafe_left(self, distance_cm, speed=1, field_relative=False):
         movement_direction = math.pi / 2
         if not field_relative:
             movement_direction += self._current_target_direction
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
+    def strafe_left(self, distance_cm, speed=1, field_relative=False):
+        movement_direction = math.pi
+        if not field_relative:
+            movement_direction += self._current_target_direction
+
+        self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
+
     def strafe_right(self, distance_cm, speed=1, field_relative=False):
-        movement_direction = -math.pi / 2
+        movement_direction = 0
         if not field_relative:
             movement_direction += self._current_target_direction
 
@@ -182,6 +182,10 @@ class Drivetrain:
 
     def move(self, direction, speed, spin) -> None:
         spin += self._rotation_PID_output
+        self.clear()
+        self.print(spin)
+        self.print(self._rotation_PID_output)
+
         speed = clamp(speed, 0, 1)  # This will ensure that speed is between 0 and 1
         spin = clamp(spin, -1, 1)  # This will ensure that speed is between -1 and 1
 
@@ -252,11 +256,16 @@ class Drivetrain:
         # in order to point the front of the robot towards the target
         self.turn_to_face_heading(direction_to_point)
 
-    def turn_to_face_heading(self, heading_rad):
+    def turn_to_face_heading(self, heading_rad, wait_=True):
         # Calculate the optimal turn, this will return a number between -pi and pi
         # that the drivetrain should rotate in order to end facing the correct direction
         angular_difference = self.calculate_optimal_turn(heading_rad)
         self.rotation_PID.setpoint += angular_difference
+        if wait_:
+            while abs(self._odometry.rotation_rad - self.rotation_PID.setpoint) > Constants.drivetrain_allowed_directional_error_rad:
+                self.update_direction_PID()
+                self.stop()  # In order to not move but continue turning
+                wait(5, MSEC)
 
     def stop(self):
         self.move(0, 0, 0)
