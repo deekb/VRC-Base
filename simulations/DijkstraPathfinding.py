@@ -71,7 +71,7 @@ def convert_point_type(point, window_size):
 
 
 def get_path(start_position, target_position):
-    with open(os.path.join(os.pardir, os.pardir, "available_positions.txt"), "r") as f:
+    with open(os.path.join(os.pardir, "deploy", "available_positions.txt"), "r") as f:
         accessible_tiles = set(eval(f.read()))
 
     valid_moves = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
