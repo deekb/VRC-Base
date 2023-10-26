@@ -10,6 +10,7 @@ class LinearRegressor:
 
     @staticmethod
     def validate_points(points):
+        points = list(points)
         n = len(points)
 
         unique_points = False
@@ -22,6 +23,8 @@ class LinearRegressor:
             raise ValueError("The number of unique data points must be greater than 1.")
 
     def fit(self, points):
+        points = list(points)
+
         self.validate_points(points)
 
         x_data = [point[0] for point in points]
