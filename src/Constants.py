@@ -123,6 +123,7 @@ wheel_diameter_cm = wheel_radius_cm * 2
 wheel_circumference_cm = wheel_diameter_cm * pi
 
 drivetrain_allowed_positional_error_cm = 2
+drivetrain_allowed_directional_error_rad = 0.025 * pi  # 4.5 degrees
 
 
 """
@@ -143,7 +144,7 @@ A note on headless mode:
     
     It does take a little getting used to: Good luck :)
 """
-headless_mode = True
+headless_mode = False
 movement_deadzone = 0.1
 turn_deadzone = 0.1
 turn_cubic_linearity = 0.4
