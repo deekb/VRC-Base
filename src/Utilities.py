@@ -1,4 +1,5 @@
 from math import isinf, sqrt, cos, sin
+import gc
 from Constants import font_size, log_directory
 from vex import *
 
@@ -340,7 +341,7 @@ class Logging:
             "w",
         )
         self.write_queue = []
-        self.log("Starting log at " + self.file_name)
+        self.log("Starting log at " + self.file_name + "\n")
 
         Thread(self.auto_flush_logs, [flush_interval])
 
@@ -354,6 +355,7 @@ class Logging:
             self.write_queue.append(str(string))
         except MemoryError:
             self.write_queue.clear()
+            gc.collect()  # Free up the unused memory previously occupied by write_queue
             self.log(
                 "WARNING:Ran out of memory while appending to write_queue, some log messages will be omitted\n"
             )
@@ -558,7 +560,7 @@ class TrapezoidalMovementProfile:
 
         if self.check_end_condition_met():
             # We are there; stop
-            return True
+            return None
 
         if self.state == self.START:
             self.acceleration_start_time = self.timer.time(SECONDS)
@@ -581,10 +583,9 @@ class TrapezoidalMovementProfile:
                 self.deceleration_start_time = self.timer.time(SECONDS)
 
             # We also need to check if it is time to transition into the traveling state
-            elif self.current_target_speed >= self.target_travel_speed:
+            elif self.timer.time(SECONDS) - self.acceleration_start_time >= self.acceleration_time:
                 # If we are currently at or above out travel speed then we are travelling
                 # Ensure that the target speed does not exceed the target_travel_speed
-                self.current_target_speed = self.target_travel_speed
                 self.state = self.TRAVELING
 
         if self.state == self.ACCELERATING:
@@ -597,7 +598,9 @@ class TrapezoidalMovementProfile:
             self.current_target_speed = self.target_travel_speed
         elif self.state == self.DECELERATING:
             # Decelerate
-            self.current_target_speed = (2 * distance_remaining) / (
+            self.current_target_speed = self.target_travel_speed - ((2 * distance_remaining) / (
                 self.deceleration_time
-                - (self.timer.time(SECONDS) - self.deceleration_start_time)
+                - (self.timer.time(SECONDS) - self.deceleration_start_time))
             )
+
+        return self.current_target_speed
