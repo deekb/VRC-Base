@@ -53,7 +53,7 @@ class Terminal:
 
 class BinarySemaphore:
     """
-    Represents a binary semaphore (thread lock) with two states, locked and unlocked and a method to acquire and release the lock
+    Represents a binary semaphore (thread lock) with two states, locked and unlocked and methods to acquire and release the lock
 
     See Also:
         https://en.m.wikipedia.org/wiki/Semaphore_(programming)
