@@ -84,7 +84,7 @@ class LinearRegressor:
             self.inverted = True
             self.fit(zip(x_data, y_data))
 
-        # un-invert the result is necessary
+        # un-invert the result if necessary
         if self.inverted:
             try:
                 self.y_intercept = (-1 / self.slope) * self.y_intercept
