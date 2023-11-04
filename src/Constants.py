@@ -58,26 +58,31 @@ class IntakeState:
 
 
 """Sensors"""
-inertial_sensor_port = Ports.PORT19
+inertial_sensor_port = Ports.PORT12
 
+"""Catapult"""
+catapult_motor_port = Ports.PORT11
+catapult_motor_gear_ratio = GearSetting.RATIO_36_1
+catapult_motor_inverted = False
+catapult_motor_speed = 20
 
 """Intake"""
-left_intake_motor_port = Ports.PORT18
+left_intake_motor_port = Ports.PORT17
 left_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 left_intake_motor_inverted = False
 
-right_intake_motor_port = Ports.PORT12
+right_intake_motor_port = Ports.PORT13
 right_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 right_intake_motor_inverted = True
 
 
 """Drivetrain Constants"""
 drivetrain_type = DrivetrainType.Mecanum
-wheel_radius_cm = 5.23875
-front_left_motor_port = Ports.PORT20
-front_right_motor_port = Ports.PORT11
+wheel_radius_cm = 3.556
+front_left_motor_port = Ports.PORT16
+front_right_motor_port = Ports.PORT14
 rear_left_motor_port = Ports.PORT10
-rear_right_motor_port = Ports.PORT1
+rear_right_motor_port = Ports.PORT21
 front_left_motor_gear_ratio = GearSetting.RATIO_18_1
 front_right_motor_gear_ratio = GearSetting.RATIO_18_1
 rear_left_motor_gear_ratio = GearSetting.RATIO_18_1
@@ -90,13 +95,13 @@ encoder_ticks_per_rotation = 360  # Green: 360
 drivetrain_rotation_offset = -pi / 4
 drivetrain_slip_coefficients = {
     pi * 0: 1,
-    pi * -0.25: 1,
-    pi * -0.5: 1,
-    pi * -0.75: 1,
+    # pi * -0.25: 1,
+    pi * -0.5: 0.75,
+    # pi * -0.75: 1,
     pi * 1: 1,
-    pi * 0.75: 1,
-    pi * 0.5: 1,
-    pi * 0.25: 1,
+    # pi * 0.75: 1,
+    pi * 0.5: 0.75,
+    # pi * 0.25: 1,
 }
 # drivetrain_slip_coefficients = {
 #     pi * 0: 0,
@@ -150,8 +155,10 @@ turn_deadzone = 0.1
 turn_cubic_linearity = 0.4
 movement_cubic_linearity = 0.4
 
-skip_setup = True
+skip_setup = False
 
+movement_acceleration_time = 0.5
+movement_deceleration_time = 0.5
 
 font_size = FontType.MONO12
 
@@ -167,8 +174,8 @@ button_size_y = 50
 phosphorus_bmp_size_x = 37
 phosphorus_bmp_size_y = 37
 
-robot_start_position = 0, 0  # (field_x_size / 2, field_y_size / 2)
-robot_start_rotation_deg = 0  # -90
+robot_start_position = 20, 78  # (field_x_size / 2, field_y_size / 2)
+robot_start_rotation_deg = 90
 drivetrain_braking = True
 
 log_directory = "/logs/"
@@ -182,3 +189,8 @@ top = 1
 bottom = 2
 left = 4
 right = 8
+
+red = 1
+blue = 2
+offensive = 4
+defensive = 8
