@@ -138,6 +138,68 @@ class Drivetrain:
             self.move_headless(direction_rad, speed, 0)
         self.stop()
 
+    def move_to_position_trap(self, target_position, speed: float, log) -> None:
+        """
+        Move to the specified position
+        :param target_position: The position to mave to
+        :type target_position: tuple[float, float]
+        :param speed: The speed (0-1) for the move
+        :type speed: float
+        """
+        # Ensure the drivetrain doesn't jerk when we start the move
+        self.clear_direction_PID_output()
+        self.stop()
+
+        # Set the target_x and target_y from the target position
+        self._current_target_x_cm, self._current_target_y_cm = target_position
+
+        distance_remaining = hypotenuse(
+            self._current_target_y_cm - self._odometry.y,
+            self._current_target_x_cm - self._odometry.x,
+        )
+
+        movement_profile = TrapezoidalMovementProfile(
+            self.timer,
+            Constants.movement_acceleration_time,
+            Constants.movement_deceleration_time,
+            speed,
+            distance_remaining,
+        )
+
+        # While the distance between our current position and our target position is greater than tha allowed movement error
+        # continuously calculate the direction we need to travel to reach the target and the remaining distance
+        while distance_remaining > self._movement_allowed_error:
+            # Calculate the direction to move in the reach the target
+            direction_rad = math.atan2(
+                self._current_target_y_cm - self._odometry.y,
+                self._current_target_x_cm - self._odometry.x,
+            )
+
+            # calculate the remaining distance to move
+            distance_remaining = hypotenuse(
+                self._current_target_x_cm - self._odometry.x,
+                self._current_target_y_cm - self._odometry.y,
+            )
+
+            # Update the rotation PID to keep us facing the same direction throughout the move
+            self.update_direction_PID()
+
+            # Get our target speed from the movement profile
+            target_movement_speed = movement_profile.update(distance_remaining)
+
+            log.log("State: " + {0: "STARTING\n", 1: "ACCELERATING\n", 2: "TRAVELING\n", 3: "DECELERATING\n"}[movement_profile.state])
+            log.log("Speed:" + str(movement_profile.current_target_speed) + "\n")
+            log.log("Time Elapsed:" + str(self.timer.time(SECONDS) - movement_profile.acceleration_start_time) + "\n")
+            log.log("Distance travelled: " + str(movement_profile.distance_travelled) + "\n")
+
+            if target_movement_speed is None:
+                # We have overshot
+                break
+
+            self.move_headless(direction_rad, target_movement_speed, 0)
+            wait(50, MSEC)
+        self.stop()
+
     def follow_path(self, point_list, maximum_speed):
         for point in point_list:
             self.move_to_position(point, maximum_speed)
@@ -153,38 +215,38 @@ class Drivetrain:
         )
 
     def forward(self, distance_cm, speed=1, field_relative=False):
-        movement_direction = -math.pi / 2
+        movement_direction = math.pi / 2
         if not field_relative:
-            movement_direction += self._current_target_direction
+            movement_direction += self.rotation_PID.setpoint
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
     def backwards(self, distance_cm, speed=1, field_relative=False):
-        movement_direction = math.pi / 2
+        movement_direction = -math.pi / 2
         if not field_relative:
-            movement_direction += self._current_target_direction
+            movement_direction += self.rotation_PID.setpoint
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
     def strafe_left(self, distance_cm, speed=1, field_relative=False):
         movement_direction = math.pi
         if not field_relative:
-            movement_direction += self._current_target_direction
+            movement_direction += self.rotation_PID.setpoint
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
     def strafe_right(self, distance_cm, speed=1, field_relative=False):
         movement_direction = 0
         if not field_relative:
-            movement_direction += self._current_target_direction
+            movement_direction += self.rotation_PID.setpoint
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
     def move(self, direction, speed, spin) -> None:
         spin += self._rotation_PID_output
-        self.clear()
-        self.print(spin)
-        self.print(self._rotation_PID_output)
+        # self.clear()
+        # self.print(spin)
+        # self.print(self._rotation_PID_output)
 
         speed = clamp(speed, 0, 1)  # This will ensure that speed is between 0 and 1
         spin = clamp(spin, -1, 1)  # This will ensure that speed is between -1 and 1
@@ -272,7 +334,7 @@ class Drivetrain:
 
     def update_direction_PID(self):
         self._rotation_PID_output = self.rotation_PID.update(
-            self._odometry.rotation_rad
+            self.current_direction_rad
         )
 
     def clear_direction_PID_output(self):
@@ -334,6 +396,7 @@ class Drivetrain:
     @current_direction_rad.setter
     def current_direction_rad(self, rotation_rad):
         self._odometry.rotation_rad = rotation_rad
+        self.target_heading_rad = rotation_rad
 
     @property
     def target_heading_rad(self) -> float:
