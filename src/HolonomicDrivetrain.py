@@ -127,7 +127,6 @@ class Drivetrain:
             )
 
             # calculate the remaining distance to move
-            # TODO: use distance_cm for trapezoidal movement profiling
             distance_cm = hypotenuse(
                 self._current_target_x_cm - self._odometry.x,
                 self._current_target_y_cm - self._odometry.y,
@@ -316,12 +315,23 @@ class Drivetrain:
         )
         # We add math.pi / 2  to direction_to_point because on the drivetrain 0 degrees is actually on the right. This means we must shift our atan2 calculation
         # in order to point the front of the robot towards the target
-        self.turn_to_face_heading(direction_to_point)
+        self.turn_to_face_heading_rad(direction_to_point)
 
-    def turn_to_face_heading(self, heading_rad, wait_=True):
+    def turn_to_face_heading_rad(self, heading_rad, wait_=True):
         # Calculate the optimal turn, this will return a number between -pi and pi
         # that the drivetrain should rotate in order to end facing the correct direction
         angular_difference = self.calculate_optimal_turn(heading_rad)
+        self.rotation_PID.setpoint += angular_difference
+        if wait_:
+            while abs(self._odometry.rotation_rad - self.rotation_PID.setpoint) > Constants.drivetrain_allowed_directional_error_rad:
+                self.update_direction_PID()
+                self.stop()  # In order to not move but continue turning
+                wait(5, MSEC)
+
+    def turn_to_face_heading_deg(self, heading_deg, wait_=True):
+        # Calculate the optimal turn, this will return a number between -pi and pi
+        # that the drivetrain should rotate in order to end facing the correct direction
+        angular_difference = self.calculate_optimal_turn(math.radians(heading_deg))
         self.rotation_PID.setpoint += angular_difference
         if wait_:
             while abs(self._odometry.rotation_rad - self.rotation_PID.setpoint) > Constants.drivetrain_allowed_directional_error_rad:
