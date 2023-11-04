@@ -14,13 +14,15 @@ For more information about the project, you can contact Derek Baier at the given
 """
 
 import Constants
-from Autonomous import NothingAutonomous
+from Autonomous import ScoringAutonomous, SabotageAutonomous, NothingAutonomous
 from HolonomicDrivetrain import Drivetrain
 from RollerIntake import Intake
+from Catapult import Catapult
 from SetupUI import SetupUI
 import math
 from Utilities import *
 from vex import *
+
 
 __title__ = Constants.__title__
 __description__ = Constants.__description__
@@ -43,6 +45,8 @@ class Robot:
         self.print = self.terminal.print
         self.clear = self.terminal.clear
 
+        self.drivetrain_rotation_log = Logging(log_name="Drivetrain_Rotation")
+
         self.primary_controller = Controller(PRIMARY)
         self.secondary_controller = Controller(PARTNER)
 
@@ -52,11 +56,19 @@ class Robot:
 
         self.disable_driver_control = False
 
-        self.autonomous_task = None
+        self.autonomous_task = NothingAutonomous
+        self.autonomous_startup_position = (0, 0)
 
         self.drivetrain = Drivetrain(timer=self.brain.timer, terminal=self.terminal)
 
         self.intake = Intake()
+
+        self.catapult_motor = Motor(
+            Constants.catapult_motor_port,
+            Constants.catapult_motor_gear_ratio,
+            Constants.catapult_motor_inverted,
+        )
+        self.catapult = Catapult(self.catapult_motor)
 
         self.drivetrain.set_braking(Constants.drivetrain_braking)
 
@@ -72,7 +84,14 @@ class Robot:
             print("[on_autonomous]: setup not complete, can't start autonomous")
             return
         autonomous_log_object = Logging(log_name="Autonomous")
-        autonomous = NothingAutonomous(autonomous_log_object)
+
+        autonomous = self.autonomous_task(
+            autonomous_log_object,
+            self.drivetrain,
+            self.intake,
+            self.terminal,
+            self.autonomous_startup_position,
+        )
         autonomous.run()
 
     def on_driver_control(self):
@@ -125,6 +144,11 @@ class Robot:
                 else:
                     self.intake.stop()
 
+                if self.primary_controller.buttonA.pressing():
+                    self.catapult.start_firing()
+                else:
+                    self.catapult.stop_firing()
+
             wait(5, MSEC)
 
     def debug_thread(self):
@@ -135,11 +159,25 @@ class Robot:
                     self.drivetrain.reset()
                 if self.primary_controller.buttonB.pressing():
                     self.disable_driver_control = True
+                    self.drivetrain_rotation_log.log(
+                        "CURRENT: " + str(self.drivetrain.current_direction_rad)
+                    )
+                    self.drivetrain_rotation_log.log(
+                        "CURRENT2: "
+                        + str(self.drivetrain._odometry._current_rotation_rad)
+                    )
+                    self.drivetrain_rotation_log.log(
+                        "TARGET: "
+                        + str(math.radians(Constants.robot_start_rotation_deg))
+                    )
+                    # self.drivetrain.rotation_PID.setpoint = math.radians(
+                    #     -Constants.robot_start_rotation_deg
+                    # )
                     self.drivetrain.target_position = (
                         self.drivetrain.current_position
                     )  # set the target position to the current position
-                    self.drivetrain.move_towards_direction_for_distance(math.pi / 2, 10, 0.2)
-                    # self.drivetrain.forward(10, 0.2)
+                    self.drivetrain.move_to_position((100, 78), 0.2)
+                    # self.drivetrain.forward(100, 0.5)
                     # self.drivetrain.turn_to_face_heading(-math.pi / 2, True)
                     # self.drivetrain.forward(50, 0.2)
                     # self.drivetrain.backwards(10, 0.7)
@@ -210,6 +248,12 @@ class Robot:
             self.competition.is_autonomous() and self.competition.is_enabled()
         ):
             wait(5, MSEC)
+
+        self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
+        self.drivetrain.clear_direction_PID_output()
+        self.drivetrain.target_position = self.drivetrain.current_position
+
+        self.drivetrain.stop()
         self.clear()
 
         for _function in (self.on_autonomous,):
@@ -229,13 +273,21 @@ class Robot:
             self.competition.is_driver_control() and self.competition.is_enabled()
         ):
             wait(5, MSEC)
+
+        self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
+        self.drivetrain.clear_direction_PID_output()
+        self.drivetrain.target_position = self.drivetrain.current_position
+
+        self.drivetrain.stop()
         self.clear()
+
         for _function in (
             self.on_driver_control,
             self.debug_thread,
             self.display_thread,
         ):
             self.driver_control_threads.append(Thread(_function))
+
         self.print("Started all driver control tasks")
         while self.competition.is_driver_control() and self.competition.is_enabled():
             wait(10, MSEC)
@@ -272,7 +324,20 @@ class Robot:
                 wait(10, MSEC)
                 setup_ui.tick()
 
-            self.print("Team: " + setup_ui.team)
+            self.brain.screen.set_fill_color(Color.TRANSPARENT)
+            self.brain.screen.set_pen_color(Color.WHITE)
+            self.print("Team: " + str(setup_ui.team))
+            self.print("Position: " + str(setup_ui.robot_position))
+            wait(1000, MSEC)
+
+            if setup_ui.robot_position == Constants.defensive | Constants.red:
+                self.autonomous_task = SabotageAutonomous
+            elif setup_ui.robot_position == Constants.defensive | Constants.blue:
+                self.autonomous_task = SabotageAutonomous
+            elif setup_ui.robot_position == Constants.offensive | Constants.red:
+                self.autonomous_task = ScoringAutonomous
+            elif setup_ui.robot_position == Constants.offensive | Constants.blue:
+                self.autonomous_task = ScoringAutonomous
 
         self.brain.screen.set_fill_color(Color.TRANSPARENT)
         self.brain.screen.set_pen_color(Color.WHITE)
@@ -281,9 +346,11 @@ class Robot:
 
         # Ensure you set the direction of the robot after the inertial sensor is calibrated or calibrating will wipe your setting
         self.drivetrain.current_position = Constants.robot_start_position
+        self.autonomous_startup_position = Constants.robot_start_position
         self.drivetrain.current_direction_rad = math.radians(
             Constants.robot_start_rotation_deg
         )
+        self.drivetrain.target_heading_rad = Constants.robot_start_rotation_deg
 
         # Set up controller callbacks here to avoid triggering them by pressing buttons during setup
         self.setup_controller_bindings()
