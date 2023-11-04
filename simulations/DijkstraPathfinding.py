@@ -11,7 +11,7 @@ sys.path.append(src_dir)
 from Dijkstra import Dijkstra
 
 MAX_FPS = 60
-DISPLAY_SCALING_FACTOR = 8
+DISPLAY_SCALING_FACTOR = 16
 FIELD_SIZE = (122, 122)
 
 pygame.init()
