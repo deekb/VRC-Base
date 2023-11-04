@@ -14,7 +14,7 @@ For more information about the project, you can contact Derek Baier at the given
 """
 
 import Constants
-from Autonomous import ScoringAutonomous, SabotageAutonomous, NothingAutonomous
+from Autonomous import ScoringAutonomous, SabotageAutonomous, NothingAutonomous, SkillsAutonomous
 from HolonomicDrivetrain import Drivetrain
 from RollerIntake import Intake
 from Catapult import Catapult
@@ -89,6 +89,7 @@ class Robot:
             autonomous_log_object,
             self.drivetrain,
             self.intake,
+            self.catapult,
             self.terminal,
             self.autonomous_startup_position,
         )
@@ -148,8 +149,6 @@ class Robot:
                     self.catapult.start_firing()
                 else:
                     self.catapult.stop_firing()
-
-            wait(5, MSEC)
 
     def debug_thread(self):
         # Runs as a background thread during driver control to provide debugging functionality
@@ -330,14 +329,17 @@ class Robot:
             self.print("Position: " + str(setup_ui.robot_position))
             wait(1000, MSEC)
 
-            if setup_ui.robot_position == Constants.defensive | Constants.red:
-                self.autonomous_task = SabotageAutonomous
-            elif setup_ui.robot_position == Constants.defensive | Constants.blue:
-                self.autonomous_task = SabotageAutonomous
-            elif setup_ui.robot_position == Constants.offensive | Constants.red:
-                self.autonomous_task = ScoringAutonomous
-            elif setup_ui.robot_position == Constants.offensive | Constants.blue:
-                self.autonomous_task = ScoringAutonomous
+            if setup_ui.team == Constants.Team.skills:
+                self.autonomous_task = SkillsAutonomous
+            else:
+                if setup_ui.robot_position == Constants.defensive | Constants.red:
+                    self.autonomous_task = SabotageAutonomous
+                elif setup_ui.robot_position == Constants.defensive | Constants.blue:
+                    self.autonomous_task = SabotageAutonomous
+                elif setup_ui.robot_position == Constants.offensive | Constants.red:
+                    self.autonomous_task = ScoringAutonomous
+                elif setup_ui.robot_position == Constants.offensive | Constants.blue:
+                    self.autonomous_task = ScoringAutonomous
 
         self.brain.screen.set_fill_color(Color.TRANSPARENT)
         self.brain.screen.set_pen_color(Color.WHITE)
