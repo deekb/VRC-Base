@@ -64,7 +64,7 @@ inertial_sensor_port = Ports.PORT12
 catapult_motor_port = Ports.PORT11
 catapult_motor_gear_ratio = GearSetting.RATIO_36_1
 catapult_motor_inverted = False
-catapult_motor_speed = 20
+catapult_motor_speed = 30
 
 """Intake"""
 left_intake_motor_port = Ports.PORT17
