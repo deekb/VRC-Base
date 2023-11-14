@@ -146,13 +146,9 @@ class Odometry:
         if not Constants.rear_right_motor_inverted:
             self._rear_right_motor_distance_since_last_tick *= -1
 
-        dx1 = (
+        dx = (
             self._front_left_motor_distance_since_last_tick
             - self._rear_right_motor_distance_since_last_tick
-        ) / 2
-        dx2 = (
-            self._rear_right_motor_distance_since_last_tick
-            - self._front_left_motor_distance_since_last_tick
         ) / 2
 
         dy = (
@@ -160,8 +156,8 @@ class Odometry:
             - self._front_right_motor_distance_since_last_tick
         ) / 2
 
-        delta_x = (dx1 * sin_theta) + (dy * cos_theta)
-        delta_y = (dy * sin_theta) + (dx2 * cos_theta)
+        delta_x = (dx * sin_theta) + (dy * cos_theta)
+        delta_y = (dy * sin_theta) - (dx * cos_theta)
 
         # direction = math.atan2(delta_y, delta_x)
         # slip_directions = sorted(list(self._slip_coefficients.keys()))
