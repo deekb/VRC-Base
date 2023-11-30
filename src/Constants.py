@@ -72,8 +72,8 @@ right_intake_motor_inverted = True
 
 
 """Wings"""
-# left_wing_port = Brain().three_wire_port.h
-# right_wing_port = Brain().three_wire_port.g
+left_wing_port = Brain().three_wire_port.h
+right_wing_port = Brain().three_wire_port.g
 
 """Drivetrain Constants"""
 drivetrain_type = DrivetrainType.Mecanum

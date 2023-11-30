@@ -17,6 +17,7 @@ import Constants
 from Autonomous import ScoringAutonomous, SabotageAutonomous, NothingAutonomous, SkillsAutonomous
 from HolonomicDrivetrain import Drivetrain
 from RollerIntake import Intake
+from PneumaticWings import Wings
 from Catapult import Catapult
 from SetupUI import SetupUI
 import math
@@ -63,6 +64,8 @@ class Robot:
 
         self.intake = Intake()
 
+        self.wings = Wings()
+
         self.catapult_motor = Motor(
             Constants.catapult_motor_port,
             Constants.catapult_motor_gear_ratio,
@@ -90,6 +93,7 @@ class Robot:
             self.drivetrain,
             self.intake,
             self.catapult,
+            self.wings,
             self.terminal,
             self.autonomous_startup_position,
         )
@@ -149,6 +153,11 @@ class Robot:
                     self.catapult.start_firing()
                 else:
                     self.catapult.stop_firing()
+
+                if self.primary_controller.buttonY.pressing():
+                    self.wings.wings_out()
+                else:
+                    self.wings.wings_in()
 
     def debug_thread(self):
         # Runs as a background thread during driver control to provide debugging functionality
