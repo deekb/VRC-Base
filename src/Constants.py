@@ -1,88 +1,87 @@
-from vex import Ports, GearSetting, FontType
+from vex import Ports, GearSetting, FontType, Brain
 from math import pi
-
-__title__ = "Vex V5 2023 Competition code"
-__description__ = "Competition Code for VRC: Over-Under 2023-2024"
-__team__ = "3773P (Bowbots Phosphorus)"
-__url__ = "https://github.com/deekb/VRC-OverUnder"
-__download_url__ = "https://github.com/deekb/VRC-OverUnder/archive/master.zip"
-__version__ = "Working"
-__author__ = "Derek Baier"
-__author_email__ = "Derek.m.baier@gmail.com"
-__license__ = "MIT"
 
 
 class ControllerAxis:
     """A class for defining controller axis constants."""
 
-    x_axis = 0
-    y_axis = 1
+    x_axis = 1
+    y_axis = 2
 
 
 class Team:
     """A class for defining the different teams"""
 
-    red = 0
-    blue = 1
-    skills = 2
+    red = 1
+    blue = 2
+    skills = 3
 
 
 class DrivetrainType:
     """A class for defining the different types of drivetrains"""
 
-    Tank = 0
-    Mecanum = 1
-    XDrive = 2
+    Tank = 1
+    Mecanum = 2
+    XDrive = 3
 
 
 class ClawState:
     """A class for defining the different states of a claw"""
 
-    open = 0
-    closed = 1
+    open = 1
+    closed = 2
 
 
 class WristState:
     """A class for defining the different states of a wrist"""
 
-    up = 0
-    down = 1
+    up = 1
+    down = 2
 
 
 class IntakeState:
     """A class for defining the different states of a roller-ed intake"""
 
-    off = 0
-    pull_in = 1
-    push_out = 2
+    off = 1
+    pull_in = 2
+    push_out = 3
+
+
+class PneumaticsState:
+    in_ = 1
+    out = 2
 
 
 """Sensors"""
-inertial_sensor_port = Ports.PORT12
+inertial_sensor_port = Ports.PORT16
 
 """Catapult"""
-catapult_motor_port = Ports.PORT11
+catapult_motor_port = Ports.PORT21
 catapult_motor_gear_ratio = GearSetting.RATIO_36_1
 catapult_motor_inverted = False
 catapult_motor_speed = 30
 
 """Intake"""
-left_intake_motor_port = Ports.PORT17
+left_intake_motor_port = Ports.PORT11
 left_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 left_intake_motor_inverted = False
 
-right_intake_motor_port = Ports.PORT13
+right_intake_motor_port = Ports.PORT18
 right_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 right_intake_motor_inverted = True
 
 
+"""Wings"""
+# left_wing_port = Brain().three_wire_port.h
+# right_wing_port = Brain().three_wire_port.g
+
 """Drivetrain Constants"""
 drivetrain_type = DrivetrainType.Mecanum
 wheel_radius_cm = 3.556
-front_left_motor_port = Ports.PORT16
-front_right_motor_port = Ports.PORT14
+front_left_motor_port = Ports.PORT20
+front_right_motor_port = Ports.PORT1
 rear_left_motor_port = Ports.PORT10
-rear_right_motor_port = Ports.PORT21
+rear_right_motor_port = Ports.PORT19
 front_left_motor_gear_ratio = GearSetting.RATIO_18_1
 front_right_motor_gear_ratio = GearSetting.RATIO_18_1
 rear_left_motor_gear_ratio = GearSetting.RATIO_18_1
@@ -150,10 +149,10 @@ A note on headless mode:
     It does take a little getting used to: Good luck :)
 """
 headless_mode = False
-movement_deadzone = 0.1
+movement_deadzone = 0.05
 turn_deadzone = 0.1
-turn_cubic_linearity = 0.4
-movement_cubic_linearity = 0.4
+turn_cubic_linearity = 0.2
+movement_cubic_linearity = 0.2
 
 skip_setup = False
 
