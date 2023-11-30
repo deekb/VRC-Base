@@ -21,10 +21,77 @@ FORWARD = "FORWARD"
 REVERSE = "REVERSE"
 
 
+class Ports:
+    PORT1 = "Port 1"
+    PORT2 = "Port 2"
+    PORT3 = "Port 3"
+    PORT4 = "Port 4"
+    PORT5 = "Port 5"
+    PORT6 = "Port 6"
+    PORT7 = "Port 7"
+    PORT8 = "Port 8"
+    PORT9 = "Port 9"
+    PORT10 = "Port 10"
+    PORT11 = "Port 11"
+    PORT12 = "Port 12"
+    PORT13 = "Port 13"
+    PORT14 = "Port 14"
+    PORT15 = "Port 15"
+    PORT16 = "Port 16"
+    PORT17 = "Port 17"
+    PORT18 = "Port 18"
+    PORT19 = "Port 19"
+    PORT20 = "Port 20"
+    PORT21 = "Port 21"
+
+
+class GearSetting:
+    RATIO_6_1 = "6 to 1"
+    RATIO_18_1 = "18 to 1"
+    RATIO_36_1 = "36 to 1"
+
+
 # noinspection PyUnusedLocal
 # noinspection PyPep8Naming
-def Thread(function, args: tuple | list | set = (None,)):
-    pass
+class FontType:
+    MONO12 = "MONO12"
+    MONO15 = "MONO15"
+    MONO20 = "MONO20"
+    MONO30 = "MONO30"
+    MONO40 = "MONO40"
+    MONO60 = "MONO60"
+
+    PROP20 = "PROP20"
+    PROP30 = "PROP30"
+    PROP40 = "PROP40"
+    PROP60 = "PROP60"
+
+
+# noinspection PyUnusedLocal
+# noinspection PyPep8Naming
+class Color:
+    BLACK = "BLACK"
+    WHITE = "WHITE"
+    RED = "RED"
+    GREEN = "GREEN"
+    BLUE = "BLUE"
+    YELLOW = "YELLOW"
+    ORANGE = "ORANGE"
+    PURPLE = "PURPLE"
+    CYAN = "CYAN"
+    TRANSPARENT = "TRANSPARENT"
+
+
+# noinspection PyUnusedLocal
+# noinspection PyPep8Naming
+class Thread:
+    def __init__(self, function, args: tuple | list | set = (None,)):
+        self.thread = threading.Thread(target=function, args=args)
+        self.thread.start()
+
+    def stop(self):
+        print("Killing thread {self.thread}")
+        self.thread.stop()
 
 
 # noinspection PyUnusedLocal
@@ -274,6 +341,18 @@ class Controller:
         def __init__(self):
             super().__init__()
 
+    # noinspection PyUnusedLocal
+    # noinspection PyPep8Naming
+    class buttonX(ControllerButton):
+        def __init__(self):
+            super().__init__()
+
+    # noinspection PyUnusedLocal
+    # noinspection PyPep8Naming
+    class buttonY(ControllerButton):
+        def __init__(self):
+            super().__init__()
+
     @staticmethod
     def rumble(pattern="-"):
         pass
@@ -330,7 +409,7 @@ class Motor:
 
     @staticmethod
     def position(*args):
-        pass
+        return 0
 
     @staticmethod
     def set_velocity(velocity, unit=PERCENT):
@@ -377,67 +456,6 @@ class MotorGroup:
 
     def stop(self):
         pass
-
-
-class Ports:
-    PORT1 = "Port 1"
-    PORT2 = "Port 2"
-    PORT3 = "Port 3"
-    PORT4 = "Port 4"
-    PORT5 = "Port 5"
-    PORT6 = "Port 6"
-    PORT7 = "Port 7"
-    PORT8 = "Port 8"
-    PORT9 = "Port 9"
-    PORT10 = "Port 10"
-    PORT11 = "Port 11"
-    PORT12 = "Port 12"
-    PORT13 = "Port 13"
-    PORT14 = "Port 14"
-    PORT15 = "Port 15"
-    PORT16 = "Port 16"
-    PORT17 = "Port 17"
-    PORT18 = "Port 18"
-    PORT19 = "Port 19"
-    PORT20 = "Port 20"
-    PORT21 = "Port 21"
-
-
-class GearSetting:
-    RATIO_6_1 = "6 to 1"
-    RATIO_18_1 = "18 to 1"
-    RATIO_36_1 = "36 to 1"
-
-
-# noinspection PyUnusedLocal
-# noinspection PyPep8Naming
-class FontType:
-    MONO12 = "MONO12"
-    MONO15 = "MONO15"
-    MONO20 = "MONO20"
-    MONO30 = "MONO30"
-    MONO40 = "MONO40"
-    MONO60 = "MONO60"
-
-    PROP20 = "PROP20"
-    PROP30 = "PROP30"
-    PROP40 = "PROP40"
-    PROP60 = "PROP60"
-
-
-# noinspection PyUnusedLocal
-# noinspection PyPep8Naming
-class Color:
-    BLACK = "BLACK"
-    WHITE = "WHITE"
-    RED = "RED"
-    GREEN = "GREEN"
-    BLUE = "BLUE"
-    YELLOW = "YELLOW"
-    ORANGE = "ORANGE"
-    PURPLE = "PURPLE"
-    CYAN = "CYAN"
-    TRANSPARENT = "TRANSPARENT"
 
 
 # noinspection PyUnusedLocal
@@ -535,7 +553,7 @@ class Brain:
     class sdcard:
         @staticmethod
         def is_inserted() -> bool:
-            pass
+            return True
 
     # noinspection PyUnusedLocal
     # noinspection PyPep8Naming
@@ -556,18 +574,15 @@ class Brain:
     # noinspection PyPep8Naming
     class timer:
         @staticmethod
-        def event(callback, time):
-            pass
-
-        @staticmethod
-        def clear():
-            pass
-
-        @staticmethod
         def time(units):
-            pass
+            current_time = time.monotonic()
+            if units == MSEC:
+                current_time *= 1000
+            return current_time
 
 
 # noinspection PyUnusedLocal
 def wait(amount, unit=MSEC):
-    pass
+    if unit == MSEC:
+        amount /= 1000
+    time.sleep(amount)
