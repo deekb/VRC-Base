@@ -1,5 +1,5 @@
 """
-Competition codebase for VRC
+Competition codebase for Vex robotics
 Team: 3773P (Bowbots Phosphorus) from Bow NH
 Author: Derek Baier (deekb on GitHub)
 Project homepage: https://github.com/deekb/VRC-Base
@@ -13,8 +13,24 @@ The project homepage and archive can be found on GitHub at the provided links.
 For more information about the project, you can contact Derek Baier at the given email address.
 """
 
+__title__ = "Vex V5 2023 Competition code"
+__description__ = "Competition Code for VRC: Over-Under 2023-2024"
+__team__ = "3773P (Bowbots Phosphorus)"
+__url__ = "https://github.com/deekb/VRC-OverUnder"
+__download_url__ = "https://github.com/deekb/VRC-OverUnder/archive/master.zip"
+__version__ = "Working"
+__author__ = "Derek Baier"
+__author_email__ = "Derek.m.baier@gmail.com"
+__license__ = "MIT"
+
 import Constants
-from Autonomous import ScoringAutonomous, SabotageAutonomous, NothingAutonomous, SkillsAutonomous
+from Autonomous import (
+    ScoringAutonomous,
+    SabotageAutonomous,
+    NothingAutonomous,
+    SkillsAutonomous,
+    WinPointAutonomous
+)
 from HolonomicDrivetrain import Drivetrain
 from RollerIntake import Intake
 from PneumaticWings import Wings
@@ -25,21 +41,14 @@ from Utilities import *
 from vex import *
 
 
-__title__ = Constants.__title__
-__description__ = Constants.__description__
-__team__ = Constants.__team__
-__url__ = Constants.__url__
-__download_url__ = Constants.__download_url__
-__version__ = Constants.__version__
-__author__ = Constants.__author__
-__author_email__ = Constants.__author_email__
-__license__ = Constants.__license__
-
-
 brain = Brain()
 
 
 class Robot:
+    """
+    Represents a robot
+    """
+
     def __init__(self, brain):
         self.brain = brain
         self.terminal = Terminal(self.brain)
@@ -80,7 +89,7 @@ class Robot:
 
     def on_autonomous(self):
         """
-        This is the function designated to run when the autonomous portion of the program is triggered
+        Runs when the competition is switched to autonomous mode
         """
         # Ensure setup is complete
         if not self.setup_complete:
@@ -101,7 +110,7 @@ class Robot:
 
     def on_driver_control(self):
         """
-        This is the function designated to run when the driver control portion of the program is triggered
+        Runs when the competition is switched to driver controlled mode
         """
         # Wait for setup to finish
         while not self.setup_complete:
@@ -118,6 +127,9 @@ class Robot:
                     clamp(self.primary_controller.axis1.position() * 0.01, -1, 1),
                     clamp(self.primary_controller.axis1.position() * 0.01, -1, 1),
                 )
+
+                left_stick = (apply_deadzone(left_stick[0], Constants.movement_deadzone, 1),
+                              apply_deadzone(left_stick[1], Constants.movement_deadzone, 1))
 
                 movement_direction = math.atan2(left_stick[1], left_stick[0])
 
@@ -333,13 +345,14 @@ class Robot:
                 setup_ui.tick()
 
             self.brain.screen.set_fill_color(Color.TRANSPARENT)
+
             self.brain.screen.set_pen_color(Color.WHITE)
             self.print("Team: " + str(setup_ui.team))
             self.print("Position: " + str(setup_ui.robot_position))
             wait(1000, MSEC)
 
             if setup_ui.team == Constants.Team.skills:
-                self.autonomous_task = SkillsAutonomous
+                self.autonomous_task = WinPointAutonomous
             else:
                 if setup_ui.robot_position == Constants.defensive | Constants.red:
                     self.autonomous_task = SabotageAutonomous
