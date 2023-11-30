@@ -156,7 +156,7 @@ class Odometry:
             - self._front_right_motor_distance_since_last_tick
         ) / 2
 
-        delta_x = (dx * sin_theta) + (dy * cos_theta)
+        delta_x = (dy * cos_theta) + (dx * sin_theta)
         delta_y = (dy * sin_theta) - (dx * cos_theta)
 
         # direction = math.atan2(delta_y, delta_x)
