@@ -2,6 +2,7 @@ from HolonomicOdometry import Odometry
 import Constants
 import math
 from Utilities import *
+import TrapezoidMovement
 
 x_axis = Constants.ControllerAxis.x_axis
 y_axis = Constants.ControllerAxis.y_axis
@@ -137,7 +138,9 @@ class Drivetrain:
             self.move_headless(direction_rad, speed, 0)
         self.stop()
 
-    def move_to_position_trap(self, target_position, speed: float, log) -> None:
+    def move_to_position_trap(
+        self, target_position, speed: float, acceleration_time, deceleration_time
+    ) -> None:
         """
         Move to the specified position
         :param target_position: The position to mave to
@@ -149,6 +152,8 @@ class Drivetrain:
         self.clear_direction_PID_output()
         self.stop()
 
+        distance_remaining_pid = PIDController(self.timer, kp=0.005)
+
         # Set the target_x and target_y from the target position
         self._current_target_x_cm, self._current_target_y_cm = target_position
 
@@ -157,17 +162,23 @@ class Drivetrain:
             self._current_target_x_cm - self._odometry.x,
         )
 
-        movement_profile = TrapezoidalMovementProfile(
-            self.timer,
-            Constants.movement_acceleration_time,
-            Constants.movement_deceleration_time,
-            speed,
-            distance_remaining,
-        )
+        distance_remaining_pid.setpoint = distance_remaining
+
+        movement_constraints = TrapezoidMovement.Constraints(1, 0.2)
+
+        initial_state = TrapezoidMovement.State(distance_remaining, 0)
+        goal_state = TrapezoidMovement.State(0, 0)
+
+        movement_profile = TrapezoidMovement.TrapezoidProfile(movement_constraints)
+
+        start_time = self.timer.time(SECONDS)
 
         # While the distance between our current position and our target position is greater than tha allowed movement error
         # continuously calculate the direction we need to travel to reach the target and the remaining distance
         while distance_remaining > self._movement_allowed_error:
+            current_time = self.timer.time(SECONDS)
+            elapsed_time = current_time - start_time
+
             # Calculate the direction to move in the reach the target
             direction_rad = math.atan2(
                 self._current_target_y_cm - self._odometry.y,
@@ -183,19 +194,29 @@ class Drivetrain:
             # Update the rotation PID to keep us facing the same direction throughout the move
             self.update_direction_PID()
 
+            target_state = movement_profile.calculate(
+                elapsed_time, initial_state, goal_state
+            )
+
             # Get our target speed from the movement profile
-            target_movement_speed = movement_profile.update(distance_remaining)
+            distance_remaining_pid.setpoint = target_state.position
 
-            log.log("State: " + {0: "STARTING\n", 1: "ACCELERATING\n", 2: "TRAVELING\n", 3: "DECELERATING\n"}[movement_profile.state])
-            log.log("Speed:" + str(movement_profile.current_target_speed) + "\n")
-            log.log("Time Elapsed:" + str(self.timer.time(SECONDS) - movement_profile.acceleration_start_time) + "\n")
-            log.log("Distance travelled: " + str(movement_profile.distance_travelled) + "\n")
+            speed = distance_remaining_pid.update(-distance_remaining)
 
-            if target_movement_speed is None:
+            self.print("distance_remaining: " + str(distance_remaining))
+            self.print("distance_remaining_pid.setpoint: " + str(distance_remaining_pid.setpoint))
+            self.print("distance_remaining_pid output: " + str(speed))
+            self.print("target_state: " + str(target_state))
+            self.print("target_state.position: " + str(target_state.position))
+            self.print("target_state.velocity: " + str(target_state.velocity))
+            self.print("elapsed_time: " + str(elapsed_time))
+            self.print("movement_profile.isFinished: " + str(movement_profile.isFinished(elapsed_time)))
+
+            if movement_profile.isFinished(elapsed_time):
                 # We have overshot
                 break
 
-            self.move_headless(direction_rad, target_movement_speed, 0)
+            self.move_headless(direction_rad, speed, 0)
             wait(50, MSEC)
         self.stop()
 
@@ -208,9 +229,11 @@ class Drivetrain:
         delta_x = math.cos(direction) * distance_cm
         delta_y = math.sin(direction) * distance_cm
 
-        self.move_to_position(
+        self.move_to_position_trap(
             (self._current_target_x_cm + delta_x, self._current_target_y_cm + delta_y),
             speed,
+            2,
+            2,
         )
 
     def forward(self, distance_cm, speed=1, field_relative=False):
@@ -282,10 +305,16 @@ class Drivetrain:
             target_rear_left_wheel_speed /= maximum_power
             target_rear_right_wheel_speed /= maximum_power
 
-        self._front_left_motor.set_velocity(target_front_left_wheel_speed * 100, PERCENT)
-        self._front_right_motor.set_velocity(target_front_right_wheel_speed * 100, PERCENT)
+        self._front_left_motor.set_velocity(
+            target_front_left_wheel_speed * 100, PERCENT
+        )
+        self._front_right_motor.set_velocity(
+            target_front_right_wheel_speed * 100, PERCENT
+        )
         self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 100, PERCENT)
-        self._rear_right_motor.set_velocity(target_rear_right_wheel_speed * 100, PERCENT)
+        self._rear_right_motor.set_velocity(
+            target_rear_right_wheel_speed * 100, PERCENT
+        )
 
     def move_headless(self, direction, magnitude, spin):
         direction -= (
@@ -323,7 +352,10 @@ class Drivetrain:
         angular_difference = self.calculate_optimal_turn(heading_rad)
         self.rotation_PID.setpoint += angular_difference
         if wait_:
-            while abs(self._odometry.rotation_rad - self.rotation_PID.setpoint) > Constants.drivetrain_allowed_directional_error_rad:
+            while (
+                abs(self._odometry.rotation_rad - self.rotation_PID.setpoint)
+                > Constants.drivetrain_allowed_directional_error_rad
+            ):
                 self.update_direction_PID()
                 self.stop()  # In order to not move but continue turning
                 wait(5, MSEC)
@@ -334,7 +366,10 @@ class Drivetrain:
         angular_difference = self.calculate_optimal_turn(math.radians(heading_deg))
         self.rotation_PID.setpoint += angular_difference
         if wait_:
-            while abs(self._odometry.rotation_rad - self.rotation_PID.setpoint) > Constants.drivetrain_allowed_directional_error_rad:
+            while (
+                abs(self._odometry.rotation_rad - self.rotation_PID.setpoint)
+                > Constants.drivetrain_allowed_directional_error_rad
+            ):
                 self.update_direction_PID()
                 self.stop()  # In order to not move but continue turning
                 wait(5, MSEC)
@@ -343,9 +378,7 @@ class Drivetrain:
         self.move(0, 0, 0)
 
     def update_direction_PID(self):
-        self._rotation_PID_output = self.rotation_PID.update(
-            self.current_direction_rad
-        )
+        self._rotation_PID_output = self.rotation_PID.update(self.current_direction_rad)
 
     def clear_direction_PID_output(self):
         self._rotation_PID_output = 0
