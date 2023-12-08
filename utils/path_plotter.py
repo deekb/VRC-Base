@@ -1,6 +1,6 @@
 import math
-import os
 import time
+
 import pygame
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 1000
