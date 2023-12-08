@@ -16,13 +16,21 @@ class AutonomousRoutine:
 
 class NothingAutonomous(AutonomousRoutine):
     def __init__(
-        self, log_object, drivetrain, intake, catapult, terminal, startup_position
+        self,
+        log_object,
+        drivetrain,
+        intake,
+        catapult,
+        wings,
+        terminal,
+        startup_position,
     ):
         super().__init__(log_object)
         self.terminal = terminal
         self.drivetrain = drivetrain
         self.intake = intake
         self.catapult = catapult
+        self.wings = wings
         self.drivetrain.current_position = startup_position
         self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
         self.drivetrain.target_position = self.drivetrain.current_position
@@ -64,20 +72,20 @@ class ScoringAutonomous(AutonomousRoutine):
 
         self.drivetrain.stop()
 
-        self.drivetrain.forward(10, 0.8)
+        self.drivetrain.forward(12, 0.8)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-135))
-        self.drivetrain.forward(70, 0.8)
+        self.drivetrain.forward(75, 0.8)
         self.drivetrain.turn_to_face_heading_rad(-math.pi / 2)
-        self.drivetrain.forward(10, 0.8)
+        self.drivetrain.forward(10, 1)
         self.intake.spit_out()
-        self.drivetrain.forward(18, 0.8)
+        self.drivetrain.forward(20, 1)
         # Push the first triball into the goal
         self.drivetrain.backwards(28, 0.8)
         self.intake.stop()
 
         self.drivetrain.turn_to_face_heading_rad(math.radians(0))
         self.drivetrain.forward(30, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-18))
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-22))
         self.drivetrain.forward(90, 0.8)
         self.intake.pull_in()
         # Grab the second triball
@@ -90,12 +98,12 @@ class ScoringAutonomous(AutonomousRoutine):
         self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
         self.intake.spit_out()
         # Score the second triball
-        self.drivetrain.forward(10, 0.8)
-        self.drivetrain.backwards(10, 0.8)
+        self.drivetrain.forward(18, 1)
+        self.drivetrain.backwards(13, 0.8)
 
         self.intake.pull_in()
         self.drivetrain.turn_to_face_heading_rad(math.radians(-46))
-        self.drivetrain.forward(40, 0.8)
+        self.drivetrain.forward(40, 0.6)
         self.drivetrain.backwards(10, 0.8)
 
         self.intake.stop()
@@ -103,7 +111,99 @@ class ScoringAutonomous(AutonomousRoutine):
 
         self.drivetrain.forward(20, 1)
         self.intake.spit_out()
+        self.drivetrain.forward(30, 1)
+
+        self.log("Done")
+        self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
+        self.drivetrain.clear_direction_PID_output()
+        self.drivetrain.target_position = self.drivetrain.current_position
+
+        self.drivetrain.stop()
+
+        self.log_object.exit()
+
+
+class ScoringAutonomous4(AutonomousRoutine):
+    def __init__(
+        self,
+        log_object,
+        drivetrain,
+        intake,
+        catapult,
+        wings,
+        terminal,
+        startup_position,
+    ):
+        super().__init__(log_object)
+        self.terminal = terminal
+        self.drivetrain = drivetrain
+        self.intake = intake
+        self.catapult = catapult
+        self.wings = wings
+        self.drivetrain.current_position = startup_position
+        self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
+        self.drivetrain.target_position = self.drivetrain.current_position
+
+    def log(self, string):
+        self.log_object.log(string + "\n")
+        self.terminal.print(string)
+
+    def run(self):
+        self.log("Starting scoring autonomous")
+
+        self.drivetrain.stop()
+
+        self.drivetrain.forward(12, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-135))
+        self.drivetrain.forward(75, 1)
+        self.drivetrain.turn_to_face_heading_rad(-math.pi / 2)
+        self.intake.spit_out()
+        self.drivetrain.forward(30, 1)
+        # Push the first triball into the goal
+        self.drivetrain.backwards(28, 1)
+        self.intake.stop()
+
+        # self.drivetrain.turn_to_face_heading_rad(math.radians(0))
+        # self.drivetrain.forward(30, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-22))
+        self.drivetrain.forward(120, 1)
+        self.intake.pull_in()
+        # Grab the second triball
+        self.drivetrain.forward(10, 1)
+        self.drivetrain.backwards(10, 1)
+        self.intake.stop()
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-140))
+
+        self.drivetrain.forward(70, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
+        self.intake.spit_out()
+        # Score the second triball
+        self.drivetrain.forward(18, 1)
+        self.drivetrain.backwards(6, 1)
+
+        self.intake.pull_in()
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-25))
+
+        self.drivetrain.forward(40, 0.4)
+        wait(100, MSEC)
+        self.drivetrain.backwards(15, 1)
+
+        self.intake.stop()
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
+
         self.drivetrain.forward(20, 1)
+        self.intake.spit_out()
+        self.drivetrain.forward(15, 1)
+        self.drivetrain.backwards(15, 1)
+        self.intake.stop()
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-15))
+        self.intake.pull_in()
+        self.drivetrain.forward(60, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
+        self.intake.stop()
+        self.drivetrain.forward(50, 1)
+        self.intake.spit_out()
+        self.drivetrain.forward(25, 1)
 
         self.log("Done")
         self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
@@ -210,7 +310,7 @@ class WinPointAutonomous(AutonomousRoutine):
 
         self.drivetrain.stop()
 
-        self.drivetrain.forward(5, 0.4)
+        self.drivetrain.forward(7.5, 0.4)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-45))
         self.wings.left_wing_out()
         self.drivetrain.forward(20, 0.4)
@@ -243,13 +343,21 @@ class WinPointAutonomous(AutonomousRoutine):
 
 class SkillsAutonomous(AutonomousRoutine):
     def __init__(
-        self, log_object, drivetrain, intake, catapult, terminal, startup_position
+        self,
+        log_object,
+        drivetrain,
+        intake,
+        catapult,
+        wings,
+        terminal,
+        startup_position,
     ):
         super().__init__(log_object)
         self.terminal = terminal
         self.drivetrain = drivetrain
         self.intake = intake
         self.catapult = catapult
+        self.wings = wings
         self.drivetrain.current_position = startup_position
         self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
         self.drivetrain.target_position = self.drivetrain.current_position
@@ -263,20 +371,47 @@ class SkillsAutonomous(AutonomousRoutine):
 
         self.drivetrain.stop()
 
-        self.drivetrain.forward(10, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-45))
-        self.drivetrain.forward(70, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
-        self.drivetrain.forward(10, 0.8)
+        self.drivetrain.forward(12, 0.8)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-135))
+        self.drivetrain.forward(75, 0.8)
+        self.drivetrain.turn_to_face_heading_rad(-math.pi / 2)
+        self.drivetrain.forward(10, 1)
         self.intake.spit_out()
-        self.drivetrain.forward(18, 0.8)
+        self.drivetrain.forward(20, 1)
         # Push the first triball into the goal
-        self.drivetrain.backwards(40, 0.8)
+        self.drivetrain.backwards(28, 0.8)
         self.intake.stop()
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-165))
-        self.drivetrain.strafe_right(15, 0.8)
-        self.drivetrain.backwards(5, 0.8)
+        self.drivetrain.strafe_left(30, 0.8)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-45))
+        self.drivetrain.backwards(40, 0.4)
+        self.drivetrain.strafe_left(40, 0.8)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-30))
+        # self.drivetrain.backwards(5, 0.4)
+
+        self.drivetrain.clear_direction_PID_output()
+        self.drivetrain.target_position = self.drivetrain.current_position
+        self.drivetrain.stop()
         self.catapult.start_firing()
+        wait(100, SECONDS)
+        self.catapult.stop_firing()
+        self.drivetrain.turn_to_face_heading_rad(math.radians(25))
+        self.drivetrain.forward(50, 0.8)
+        self.drivetrain.turn_to_face_heading_rad(0)
+        self.drivetrain.forward(40, 1)
+        self.intake.pull_in()
+        self.drivetrain.forward(50, 1)
+        self.intake.stop()
+        self.drivetrain.forward(85, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
+        self.drivetrain.forward(30, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(180))
+        self.drivetrain.forward(30, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
+        self.drivetrain.forward(50, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(0))
+        self.wings.wings_out()
+        self.drivetrain.forward(60, 1)
+        self.drivetrain.backwards(60, 1)
 
         self.log("Done")
         self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad

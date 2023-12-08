@@ -23,23 +23,23 @@ __author__ = "Derek Baier"
 __author_email__ = "Derek.m.baier@gmail.com"
 __license__ = "MIT"
 
+import math
+
 import Constants
 from Autonomous import (
-    ScoringAutonomous,
+    ScoringAutonomous4,
     SabotageAutonomous,
     NothingAutonomous,
     SkillsAutonomous,
-    WinPointAutonomous
 )
-from HolonomicDrivetrain import Drivetrain
-from RollerIntake import Intake
-from PneumaticWings import Wings
 from Catapult import Catapult
+from Climber import Climber
+from HolonomicDrivetrain import Drivetrain
+from PneumaticWings import Wings
+from RollerIntake import Intake
 from SetupUI import SetupUI
-import math
 from Utilities import *
 from vex import *
-
 
 brain = Brain()
 
@@ -55,7 +55,7 @@ class Robot:
         self.print = self.terminal.print
         self.clear = self.terminal.clear
 
-        self.drivetrain_rotation_log = Logging(log_name="Drivetrain_Rotation")
+        self.drivetrain_position_log = Logging(log_name="Drivetrain_Position")
 
         self.primary_controller = Controller(PRIMARY)
         self.secondary_controller = Controller(PARTNER)
@@ -81,6 +81,14 @@ class Robot:
             Constants.catapult_motor_inverted,
         )
         self.catapult = Catapult(self.catapult_motor)
+
+        self.climber_motor = Motor(
+            Constants.climber_motor_port,
+            Constants.climber_motor_gear_ratio,
+            Constants.climber_motor_inverted,
+        )
+
+        self.climber = Climber(self.climber_motor)
 
         self.drivetrain.set_braking(Constants.drivetrain_braking)
 
@@ -128,8 +136,10 @@ class Robot:
                     clamp(self.primary_controller.axis1.position() * 0.01, -1, 1),
                 )
 
-                left_stick = (apply_deadzone(left_stick[0], Constants.movement_deadzone, 1),
-                              apply_deadzone(left_stick[1], Constants.movement_deadzone, 1))
+                left_stick = (
+                    apply_deadzone(left_stick[0], Constants.movement_deadzone, 1),
+                    apply_deadzone(left_stick[1], Constants.movement_deadzone, 1),
+                )
 
                 movement_direction = math.atan2(left_stick[1], left_stick[0])
 
@@ -171,41 +181,47 @@ class Robot:
                 else:
                     self.wings.wings_in()
 
+                if self.primary_controller.buttonL2.pressing():
+                    self.climber.set_velocity(1)
+                elif self.primary_controller.buttonR2.pressing():
+                    self.climber.set_velocity(-1)
+                else:
+                    self.climber.set_velocity(0)
+
     def debug_thread(self):
         # Runs as a background thread during driver control to provide debugging functionality
         while True:
-            if self.setup_complete:
-                if self.primary_controller.buttonA.pressing():
-                    self.drivetrain.reset()
-                if self.primary_controller.buttonB.pressing():
-                    self.disable_driver_control = True
-                    self.drivetrain_rotation_log.log(
-                        "CURRENT: " + str(self.drivetrain.current_direction_rad)
-                    )
-                    self.drivetrain_rotation_log.log(
-                        "CURRENT2: "
-                        + str(self.drivetrain._odometry._current_rotation_rad)
-                    )
-                    self.drivetrain_rotation_log.log(
-                        "TARGET: "
-                        + str(math.radians(Constants.robot_start_rotation_deg))
-                    )
-                    # self.drivetrain.rotation_PID.setpoint = math.radians(
-                    #     -Constants.robot_start_rotation_deg
-                    # )
-                    self.drivetrain.target_position = (
-                        self.drivetrain.current_position
-                    )  # set the target position to the current position
-                    self.drivetrain.move_to_position((100, 78), 0.2)
-                    # self.drivetrain.forward(100, 0.5)
-                    # self.drivetrain.turn_to_face_heading(-math.pi / 2, True)
-                    # self.drivetrain.forward(50, 0.2)
-                    # self.drivetrain.backwards(10, 0.7)
-                    # self.drivetrain.strafe_left(10, 0.7)
-                    # self.drivetrain.strafe_right(10, 0.7)
-
-                    self.drivetrain.clear_direction_PID_output()
-                    self.disable_driver_control = False
+            # self.drivetrain_position_log.log(
+            #     str(self.brain.timer.time(SECONDS))
+            #     + ", "
+            #     + str(self.drivetrain.current_position)
+            #     + ", "
+            #     + str(self.drivetrain.current_direction_rad)
+            #     + "\n"
+            # )
+            wait(20, MSEC)
+            # if self.primary_controller.buttonLeft.pressing():
+            #     self.drivetrain.turn_to_face_heading_deg(90)
+            #     for _ in range(100):
+            #         self.drivetrain.update_direction_PID()
+            #         self.drivetrain.stop()
+            #         wait(10, MSEC)
+            #     self.drivetrain.rotation_PID.setpoint = (
+            #         self.drivetrain.current_direction_rad
+            #     )
+            #     self.drivetrain.clear_direction_PID_output()
+            #     self.drivetrain.target_position = self.drivetrain.current_position
+            # elif self.primary_controller.buttonRight.pressing():
+            #     self.drivetrain.turn_to_face_heading_deg(0)
+            #     for _ in range(100):
+            #         self.drivetrain.update_direction_PID()
+            #         self.drivetrain.stop()
+            #         wait(10, MSEC)
+            #     self.drivetrain.rotation_PID.setpoint = (
+            #         self.drivetrain.current_direction_rad
+            #     )
+            #     self.drivetrain.clear_direction_PID_output()
+            #     self.drivetrain.target_position = self.drivetrain.current_position
 
     def display_thread(self):
         # Runs as a background thread during driver control to display information about the robot on the screen
@@ -352,21 +368,22 @@ class Robot:
             wait(1000, MSEC)
 
             if setup_ui.team == Constants.Team.skills:
-                self.autonomous_task = WinPointAutonomous
+                self.autonomous_task = SkillsAutonomous  # WinPointAutonomous
             else:
                 if setup_ui.robot_position == Constants.defensive | Constants.red:
                     self.autonomous_task = SabotageAutonomous
                 elif setup_ui.robot_position == Constants.defensive | Constants.blue:
                     self.autonomous_task = SabotageAutonomous
                 elif setup_ui.robot_position == Constants.offensive | Constants.red:
-                    self.autonomous_task = ScoringAutonomous
+                    self.autonomous_task = ScoringAutonomous4
                 elif setup_ui.robot_position == Constants.offensive | Constants.blue:
-                    self.autonomous_task = ScoringAutonomous
+                    self.autonomous_task = ScoringAutonomous4
 
         self.brain.screen.set_fill_color(Color.TRANSPARENT)
         self.brain.screen.set_pen_color(Color.WHITE)
 
         self.drivetrain.calibrate_inertial_sensor()
+        self.climber.calibrate()
 
         # Ensure you set the direction of the robot after the inertial sensor is calibrated or calibrating will wipe your setting
         self.drivetrain.current_position = Constants.robot_start_position
