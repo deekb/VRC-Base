@@ -463,6 +463,18 @@ class MotorGroup:
 class Brain:
     # noinspection PyUnusedLocal
     # noinspection PyPep8Naming
+    class three_wire_port:
+        a = 1
+        b = 2
+        c = 3
+        d = 4
+        e = 5
+        f = 6
+        g = 7
+        h = 8
+
+    # noinspection PyUnusedLocal
+    # noinspection PyPep8Naming
     class screen:
         @staticmethod
         def print(text):
