@@ -53,20 +53,28 @@ class PneumaticsState:
 
 
 """Sensors"""
-inertial_sensor_port = Ports.PORT16
+inertial_sensor_port = Ports.PORT18
+
 
 """Catapult"""
 catapult_motor_port = Ports.PORT21
 catapult_motor_gear_ratio = GearSetting.RATIO_36_1
-catapult_motor_inverted = False
+catapult_motor_inverted = True
 catapult_motor_speed = 30
+
+
+"""Climber"""
+climber_motor_port = Ports.PORT16
+climber_motor_gear_ratio = GearSetting.RATIO_36_1
+climber_motor_inverted = True
+
 
 """Intake"""
 left_intake_motor_port = Ports.PORT11
 left_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 left_intake_motor_inverted = False
 
-right_intake_motor_port = Ports.PORT18
+right_intake_motor_port = Ports.PORT12
 right_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 right_intake_motor_inverted = True
 
@@ -75,13 +83,14 @@ right_intake_motor_inverted = True
 left_wing_port = Brain().three_wire_port.h
 right_wing_port = Brain().three_wire_port.g
 
+
 """Drivetrain Constants"""
 drivetrain_type = DrivetrainType.Mecanum
 wheel_radius_cm = 3.556
-front_left_motor_port = Ports.PORT20
-front_right_motor_port = Ports.PORT1
-rear_left_motor_port = Ports.PORT10
-rear_right_motor_port = Ports.PORT19
+front_left_motor_port = Ports.PORT1
+front_right_motor_port = Ports.PORT2
+rear_left_motor_port = Ports.PORT19
+rear_right_motor_port = Ports.PORT20
 front_left_motor_gear_ratio = GearSetting.RATIO_18_1
 front_right_motor_gear_ratio = GearSetting.RATIO_18_1
 rear_left_motor_gear_ratio = GearSetting.RATIO_18_1
@@ -118,15 +127,15 @@ rear_left_wheel_rotation_rad = pi / 4 + pi / 2
 rear_right_wheel_rotation_rad = pi / 4
 
 # For tuning the rotation PID gains, please refer to the "Tuning a PID controller" section of Utilities.md
-drivetrain_turn_Kp = 1.75 * 0.4
+drivetrain_turn_Kp = 2.1 * 0.4
 drivetrain_turn_Ki = 0
-drivetrain_turn_Kd = 0
+drivetrain_turn_Kd = 0.017
 
 
 wheel_diameter_cm = wheel_radius_cm * 2
 wheel_circumference_cm = wheel_diameter_cm * pi
 
-drivetrain_allowed_positional_error_cm = 2
+drivetrain_allowed_positional_error_cm = 3
 drivetrain_allowed_directional_error_rad = 0.025 * pi  # 4.5 degrees
 
 
