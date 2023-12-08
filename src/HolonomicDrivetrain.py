@@ -105,6 +105,7 @@ class Drivetrain:
         :param speed: The speed (0-1) for the move
         :type speed: float
         """
+
         # Ensure the drivetrain doesn't jerk when we start the move
         self.clear_direction_PID_output()
         self.stop()
@@ -152,7 +153,7 @@ class Drivetrain:
         self.clear_direction_PID_output()
         self.stop()
 
-        distance_remaining_pid = PIDController(self.timer, kp=0.005)
+        distance_remaining_pid = PIDController(self.timer, kp=0.01)
 
         # Set the target_x and target_y from the target position
         self._current_target_x_cm, self._current_target_y_cm = target_position
@@ -229,11 +230,11 @@ class Drivetrain:
         delta_x = math.cos(direction) * distance_cm
         delta_y = math.sin(direction) * distance_cm
 
-        self.move_to_position_trap(
+        self.move_to_position(
             (self._current_target_x_cm + delta_x, self._current_target_y_cm + delta_y),
             speed,
-            2,
-            2,
+            # 2,
+            # 2,
         )
 
     def forward(self, distance_cm, speed=1, field_relative=False):
@@ -271,7 +272,7 @@ class Drivetrain:
         # self.print(self._rotation_PID_output)
 
         speed = clamp(speed, 0, 1)  # This will ensure that speed is between 0 and 1
-        spin = clamp(spin, -1, 1)  # This will ensure that speed is between -1 and 1
+        spin = clamp(spin, -1, 1)  # This will ensure that spin is between -1 and 1
 
         target_front_left_wheel_speed = calculate_wheel_power(
             direction, speed, self._front_left_wheel_rotation_rad
@@ -306,14 +307,14 @@ class Drivetrain:
             target_rear_right_wheel_speed /= maximum_power
 
         self._front_left_motor.set_velocity(
-            target_front_left_wheel_speed * 100, PERCENT
+            target_front_left_wheel_speed * 142.8, PERCENT
         )
         self._front_right_motor.set_velocity(
-            target_front_right_wheel_speed * 100, PERCENT
+            target_front_right_wheel_speed * 142.8, PERCENT
         )
-        self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 100, PERCENT)
+        self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 142.8, PERCENT)
         self._rear_right_motor.set_velocity(
-            target_rear_right_wheel_speed * 100, PERCENT
+            target_rear_right_wheel_speed * 142.8, PERCENT
         )
 
     def move_headless(self, direction, magnitude, spin):
