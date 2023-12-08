@@ -3,6 +3,19 @@ This file is for Pycharm autocomplete only and has no functionality,
 it will NOT be uploaded to the robot or placed on the SD card
 it does not need to be formatted correctly or error-free
 """
+import os
+import sys
+import time
+import threading
+
+simulations_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "simulations"
+)
+
+sys.path.append(simulations_dir)
+os.chdir(simulations_dir)
+
+# from full_vex_simulation import *
 
 # noinspection PyUnusedLocal
 # noinspection PyPep8Naming
