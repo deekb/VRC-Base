@@ -392,7 +392,7 @@ class SkillsAutonomous(AutonomousRoutine):
         self.drivetrain.target_position = self.drivetrain.current_position
         self.drivetrain.stop()
         self.catapult.start_firing()
-        wait(100, SECONDS)
+        wait(15, SECONDS)
         self.catapult.stop_firing()
         self.drivetrain.turn_to_face_heading_rad(math.radians(25))
         self.drivetrain.forward(50, 0.8)
@@ -403,7 +403,7 @@ class SkillsAutonomous(AutonomousRoutine):
         self.intake.stop()
         self.drivetrain.forward(85, 1)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
-        self.drivetrain.forward(30, 1)
+        self.drivetrain.forward(50, 1)
         self.drivetrain.turn_to_face_heading_rad(math.radians(180))
         self.drivetrain.forward(30, 1)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
