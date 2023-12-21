@@ -31,6 +31,7 @@ from Autonomous import (
     SabotageAutonomous,
     NothingAutonomous,
     SkillsAutonomous,
+    WinPointAutonomous
 )
 from Catapult import Catapult
 from Climber import Climber
