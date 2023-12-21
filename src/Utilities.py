@@ -114,7 +114,7 @@ class MotorPID:
         kd: float = 0.05,
         t: float = 0.1,
     ):
-        """ "
+        """
         Creates an instance of the MotorPID
 
         Args:
