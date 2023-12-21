@@ -11,16 +11,13 @@ y_axis = Constants.ControllerAxis.y_axis
 class Drivetrain:
     """
     A drivetrain controller for a holonomic drive base
+
+    Args:
+        timer: A brain.timer() object used for getting delta times
+        terminal: An optional terminal to print debug output to
     """
 
     def __init__(self, timer: Brain.timer, terminal: Terminal = None):
-        """
-        Initialize a new drivetrain with the specified properties
-        :param timer: A brain.timer() object used for getting delta times
-        :type timer: Brain.timer()
-        :param terminal: An optional terminal to print debug output to
-        :type terminal: Terminal | None
-        """
         self.timer = timer
         self.terminal = terminal
 
@@ -100,10 +97,10 @@ class Drivetrain:
     def move_to_position(self, target_position, speed: float) -> None:
         """
         Move to the specified position
-        :param target_position: The position to mave to
-        :type target_position: tuple[float, float]
-        :param speed: The speed (0-1) for the move
-        :type speed: float
+
+        Args:
+            target_position (tuple[float, float]): The position to mave to
+            speed (float): The speed (0-1) for the move
         """
 
         # Ensure the drivetrain doesn't jerk when we start the move
@@ -143,11 +140,14 @@ class Drivetrain:
         self, target_position, speed: float, acceleration_time, deceleration_time
     ) -> None:
         """
-        Move to the specified position
-        :param target_position: The position to mave to
-        :type target_position: tuple[float, float]
-        :param speed: The speed (0-1) for the move
-        :type speed: float
+        Move to the specified position using a trapezoidal movement profile
+
+
+        Args:
+            target_position (tuple[float, float]): The position to mave to
+            speed (float): The speed (0-1) for the move
+            acceleration_time (float): The time to take for acceleration in seconds
+            deceleration_time (float): The time to take for deceleration in seconds
         """
         # Ensure the drivetrain doesn't jerk when we start the move
         self.clear_direction_PID_output()
@@ -299,7 +299,7 @@ class Drivetrain:
             # This will result in clipping, meaning that the motor speeds will be "clipped" off to the maximum (1)
             # We will lose some control of our turning while we are moving quickly
             # To solve this issue we can detect if any motor velocities exceed the maximum possible velocity and
-            # Use the inverse of the maximum motor power as a salar by dividing by it.
+            # Use the inverse of the maximum motor power as a scalar by dividing by it.
             # This wil always output all values in a range from 0-1
             target_front_left_wheel_speed /= maximum_power
             target_front_right_wheel_speed /= maximum_power
@@ -406,11 +406,12 @@ class Drivetrain:
         self._odometry.reset()
 
     @property
-    def target_position(self) -> tuple:
+    def target_position(self):
         """
         Get the position of the robot, useful for displaying on the screen
-        :returns: A tuple; x, y
-        :rtype: tuple[float, float]
+
+        Returns:
+            The robot's current position in centimeters (x, y)
         """
         return self._current_target_x_cm, self._current_target_y_cm
 
@@ -418,8 +419,10 @@ class Drivetrain:
     def target_position(self, position) -> None:
         """
         Set the target position of the robot, useful after calibration to set it to a specific position without modifying heading
-        :param position: The robot's new coordinate pair (x, y)
-        :type position: tuple[float, float]
+
+        Args:
+            position (tuple[float, float]): The robot's new coordinate pair (x, y)
+
         """
         self._current_target_x_cm, self._current_target_y_cm = position
 
@@ -446,7 +449,9 @@ class Drivetrain:
     def target_heading_rad(self) -> float:
         """
         Get the current target heading in radians
-        :returns: The current target heading of the robot in radians (use heading_deg for degrees)
+
+        Returns:
+            The current target heading of the robot in radians (use heading_deg for degrees)
         """
         return self.rotation_PID.setpoint
 
@@ -454,23 +459,29 @@ class Drivetrain:
     def target_heading_rad(self, heading) -> None:
         """
         Set the current target heading in radians
-        :param heading: New target heading in radians
+
+        Args:
+             heading: New target heading in radians
         """
         self.rotation_PID.setpoint = heading
 
     @property
-    def target_heading_deg(self) -> float:
+    def target_heading_deg(self):
         """
         Get the current target heading in degrees
-        :returns: The current target heading of the robot in degrees (use heading_deg for radians)
+
+        Returns:
+            The current target heading of the robot in degrees (use heading_rad for radians)
         """
         return math.degrees(self.rotation_PID.setpoint)
 
     @target_heading_deg.setter
-    def target_heading_deg(self, heading) -> None:
+    def target_heading_deg(self, heading):
         """
         Set the current target heading in degrees
-        :param heading: New target heading in degrees
+
+        Args:
+            heading (float): New target heading in degrees
         """
         self.rotation_PID.setpoint = math.radians(heading)
 
