@@ -15,10 +15,7 @@ class PriorityQueue:
         self.heap = []
 
     def _swap(self, i, j):
-        _i = self.heap[i]
-        _j = self.heap[j]
-
-        self.heap[i], self.heap[j] = _j, _i
+        self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
 
     def _heapify_up(self, index):
         while index > 0 and self.heap[index] < self.heap[_parent(index)]:
