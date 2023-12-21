@@ -1,9 +1,10 @@
-import random
-import pygame
 import math
-import time
-import sys
 import os
+import random
+import sys
+import time
+
+import pygame
 
 src_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"
