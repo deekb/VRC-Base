@@ -17,6 +17,14 @@ class Team:
     skills = 3
 
 
+class AnchorPoint:
+    top_left = 1
+    top_right = 2
+    bottom_left = 3
+    bottom_right = 4
+    center = 5
+
+
 class DrivetrainType:
     """A class for defining the different types of drivetrains"""
 
