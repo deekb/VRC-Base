@@ -76,42 +76,63 @@ class ScoringAutonomous(AutonomousRoutine):
         self.drivetrain.turn_to_face_heading_rad(math.radians(-135))
         self.drivetrain.forward(75, 0.8)
         self.drivetrain.turn_to_face_heading_rad(-math.pi / 2)
-        self.drivetrain.forward(10, 1)
         self.intake.spit_out()
-        self.drivetrain.forward(20, 1)
+        self.drivetrain.forward(30, 0.8)
         # Push the first triball into the goal
         self.drivetrain.backwards(28, 0.8)
         self.intake.stop()
 
-        self.drivetrain.turn_to_face_heading_rad(math.radians(0))
-        self.drivetrain.forward(30, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-22))
-        self.drivetrain.forward(90, 0.8)
+        # self.drivetrain.turn_to_face_heading_rad(math.radians(0))
+        # self.drivetrain.forward(30, 1)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-19))  # -20
+        self.drivetrain.forward(120, 0.8)
         self.intake.pull_in()
         # Grab the second triball
-        self.drivetrain.forward(10, 0.6)
+        self.drivetrain.forward(10, 0.8)
         self.drivetrain.backwards(10, 0.8)
         self.intake.stop()
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-135))
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-140))
 
         self.drivetrain.forward(70, 0.8)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
         self.intake.spit_out()
         # Score the second triball
-        self.drivetrain.forward(18, 1)
-        self.drivetrain.backwards(13, 0.8)
+        self.drivetrain.forward(18, 0.8)
+        self.drivetrain.backwards(6, 0.5)
 
         self.intake.pull_in()
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-46))
-        self.drivetrain.forward(40, 0.6)
-        self.drivetrain.backwards(10, 0.8)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-15))  # -25
+        start_time = self.drivetrain.timer.time(SECONDS)
+
+        while self.drivetrain.timer.time(SECONDS) - start_time < 0.4:
+            self.drivetrain.update_direction_PID()
+            self.drivetrain.stop()
+
+        self.drivetrain.forward(40, 0.4)
+        start_time = self.drivetrain.timer.time(SECONDS)
+
+        while self.drivetrain.timer.time(SECONDS) - start_time < 0.1:
+            self.drivetrain.update_direction_PID()
+            self.drivetrain.stop()
+
+        self.drivetrain.backwards(15, 1)
 
         self.intake.stop()
         self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
 
         self.drivetrain.forward(20, 1)
         self.intake.spit_out()
-        self.drivetrain.forward(30, 1)
+        self.drivetrain.forward(15, 1)
+        self.drivetrain.backwards(15, 1)
+        self.intake.stop()
+        # self.drivetrain.turn_to_face_heading_rad(math.radians(-15))
+        # self.intake.pull_in()
+        # self.drivetrain.forward(60, 1)
+        # self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
+        # self.intake.stop()
+        # self.drivetrain.forward(50, 1)
+        # self.intake.spit_out()
+        # self.drivetrain.forward(25, 1)
 
         self.log("Done")
         self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
@@ -403,7 +424,7 @@ class SkillsAutonomous(AutonomousRoutine):
         self.intake.stop()
         self.drivetrain.forward(85, 1)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
-        self.drivetrain.forward(50, 1)
+        self.drivetrain.forward(60, 1)
         self.drivetrain.turn_to_face_heading_rad(math.radians(180))
         self.drivetrain.forward(30, 1)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
