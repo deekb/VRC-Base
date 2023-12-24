@@ -27,6 +27,7 @@ import math
 
 import Constants
 from Autonomous import (
+    ScoringAutonomous,
     ScoringAutonomous4,
     SabotageAutonomous,
     NothingAutonomous,
@@ -376,9 +377,9 @@ class Robot:
                 elif setup_ui.robot_position == Constants.defensive | Constants.blue:
                     self.autonomous_task = SabotageAutonomous
                 elif setup_ui.robot_position == Constants.offensive | Constants.red:
-                    self.autonomous_task = ScoringAutonomous4
+                    self.autonomous_task = ScoringAutonomous
                 elif setup_ui.robot_position == Constants.offensive | Constants.blue:
-                    self.autonomous_task = ScoringAutonomous4
+                    self.autonomous_task = ScoringAutonomous
 
         self.brain.screen.set_fill_color(Color.TRANSPARENT)
         self.brain.screen.set_pen_color(Color.WHITE)
