@@ -13,3 +13,7 @@ class Catapult:
 
     def stop_firing(self):
         self.catapult_motor.set_velocity(0)
+
+    def fire_for_rotations(self, rotations):
+        self.catapult_motor.spin_for(FORWARD, rotations, TURNS)
+        self.stop_firing()
