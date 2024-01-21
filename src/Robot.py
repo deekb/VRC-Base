@@ -32,7 +32,8 @@ from Autonomous import (
     SabotageAutonomous,
     NothingAutonomous,
     SkillsAutonomous,
-    WinPointAutonomous
+    WinPointAutonomous,
+    TestAuto
 )
 from Catapult import Catapult
 from Climber import Climber
@@ -373,9 +374,9 @@ class Robot:
                 self.autonomous_task = SkillsAutonomous  # WinPointAutonomous
             else:
                 if setup_ui.robot_position == Constants.defensive | Constants.red:
-                    self.autonomous_task = SabotageAutonomous
+                    self.autonomous_task = TestAuto
                 elif setup_ui.robot_position == Constants.defensive | Constants.blue:
-                    self.autonomous_task = SabotageAutonomous
+                    self.autonomous_task = TestAuto
                 elif setup_ui.robot_position == Constants.offensive | Constants.red:
                     self.autonomous_task = ScoringAutonomous
                 elif setup_ui.robot_position == Constants.offensive | Constants.blue:
@@ -385,7 +386,7 @@ class Robot:
         self.brain.screen.set_pen_color(Color.WHITE)
 
         self.drivetrain.calibrate_inertial_sensor()
-        self.climber.calibrate()
+        # self.climber.calibrate()
 
         # Ensure you set the direction of the robot after the inertial sensor is calibrated or calibrating will wipe your setting
         self.drivetrain.current_position = Constants.robot_start_position
