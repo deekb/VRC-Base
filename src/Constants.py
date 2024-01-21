@@ -65,40 +65,40 @@ inertial_sensor_port = Ports.PORT18
 
 
 """Catapult"""
-catapult_motor_port = Ports.PORT21
+catapult_motor_port = Ports.PORT11
 catapult_motor_gear_ratio = GearSetting.RATIO_36_1
 catapult_motor_inverted = True
 catapult_motor_speed = 30
 
 
 """Climber"""
-climber_motor_port = Ports.PORT16
+climber_motor_port = Ports.PORT17
 climber_motor_gear_ratio = GearSetting.RATIO_36_1
 climber_motor_inverted = True
 
+climber_locking_port = wing_port = Brain().three_wire_port.g
 
 """Intake"""
-left_intake_motor_port = Ports.PORT11
+left_intake_motor_port = Ports.PORT20
 left_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 left_intake_motor_inverted = False
 
-right_intake_motor_port = Ports.PORT12
+right_intake_motor_port = Ports.PORT19
 right_intake_motor_gear_ratio = GearSetting.RATIO_18_1
 right_intake_motor_inverted = True
 
 
 """Wings"""
-left_wing_port = Brain().three_wire_port.h
-right_wing_port = Brain().three_wire_port.g
+wing_port = Brain().three_wire_port.h
 
 
 """Drivetrain Constants"""
 drivetrain_type = DrivetrainType.Mecanum
 wheel_radius_cm = 3.556
-front_left_motor_port = Ports.PORT1
-front_right_motor_port = Ports.PORT2
-rear_left_motor_port = Ports.PORT19
-rear_right_motor_port = Ports.PORT20
+front_left_motor_port = Ports.PORT18
+front_right_motor_port = Ports.PORT21
+rear_left_motor_port = Ports.PORT12
+rear_right_motor_port = Ports.PORT1
 front_left_motor_gear_ratio = GearSetting.RATIO_18_1
 front_right_motor_gear_ratio = GearSetting.RATIO_18_1
 rear_left_motor_gear_ratio = GearSetting.RATIO_18_1
