@@ -42,6 +42,37 @@ class NothingAutonomous(AutonomousRoutine):
         self.log_object.exit()
 
 
+class TestAuto(AutonomousRoutine):
+    def __init__(
+        self,
+        log_object,
+        drivetrain,
+        intake,
+        catapult,
+        wings,
+        terminal,
+        startup_position,
+    ):
+        super().__init__(log_object)
+        self.terminal = terminal
+        self.drivetrain = drivetrain
+        self.intake = intake
+        self.catapult = catapult
+        self.wings = wings
+        self.drivetrain.current_position = startup_position
+        self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
+        self.drivetrain.target_position = self.drivetrain.current_position
+
+    def run(self):
+        wait(5000, MSEC)
+        self.drivetrain.forward(61, 0.5)
+        self.intake.spit_out()
+        wait(500, MSEC)
+        self.drivetrain.backwards(61, 0.5)
+        self.intake.stop()
+        self.log_object.exit()
+
+
 class ScoringAutonomous(AutonomousRoutine):
     def __init__(
         self,
@@ -339,13 +370,12 @@ class WinPointAutonomous(AutonomousRoutine):
         self.drivetrain.forward(30, 0.4)
         self.wings.left_wing_in()
         self.drivetrain.strafe_right(20, 0.4)
-        self.drivetrain.forward(30, 0.4)
+        self.drivetrain.forward(20, 0.4)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
-        self.drivetrain.forward(25, 0.5)
         self.intake.spit_out()
         wait(1000, MSEC)
         self.intake.stop()
-        self.drivetrain.backwards(20, 0.4)
+        self.drivetrain.forward(5, 0.6)
         self.drivetrain.turn_to_face_heading_rad(math.radians(180))
         self.drivetrain.forward(130, 1)
         self.wings.right_wing_out()
@@ -412,9 +442,9 @@ class SkillsAutonomous(AutonomousRoutine):
         self.drivetrain.clear_direction_PID_output()
         self.drivetrain.target_position = self.drivetrain.current_position
         self.drivetrain.stop()
-        self.catapult.start_firing()
-        wait(15, SECONDS)
-        self.catapult.stop_firing()
+
+        self.catapult.fire_for_rotations(50)
+
         self.drivetrain.turn_to_face_heading_rad(math.radians(25))
         self.drivetrain.forward(50, 0.8)
         self.drivetrain.turn_to_face_heading_rad(0)
