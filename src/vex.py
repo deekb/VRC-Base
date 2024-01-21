@@ -22,6 +22,7 @@ os.chdir(simulations_dir)
 SECONDS = "SECONDS"
 PERCENT = "PERCENT"
 DEGREES = "DEGREES"
+TURNS = "TURNS"
 MM = "MM"
 MSEC = "MSEC"
 VOLT = "VOLT"
