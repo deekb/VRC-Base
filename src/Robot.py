@@ -187,12 +187,14 @@ class Robot:
                     if self.primary_controller.buttonB.pressing():
                         if not self.catapult_toggled_last_tick:
                             self.catapult.firing = not self.catapult.firing
+                            self.catapult.set_velocity(Constants.catapult_motor_speed)
                         self.catapult_toggled_last_tick = True
                     else:
                         self.catapult_toggled_last_tick = False
                 else:
                     if self.primary_controller.buttonB.pressing():
                         self.catapult.start_firing()
+                        self.catapult.set_velocity(50)
                     else:
                         self.catapult.stop_firing()
 
