@@ -33,7 +33,7 @@ from Autonomous import (
     NothingAutonomous,
     SkillsAutonomous,
     WinPointAutonomous,
-    TestAuto
+    TestAuto,
 )
 from Catapult import Catapult
 from Climber import Climber
@@ -74,16 +74,21 @@ class Robot:
 
         self.drivetrain = Drivetrain(timer=self.brain.timer, terminal=self.terminal)
 
+        self.driver_control_start_time = 0
+
         self.intake = Intake()
 
         self.wings = Wings()
+        self.wings_toggled_last_tick = False
 
         self.catapult_motor = Motor(
             Constants.catapult_motor_port,
             Constants.catapult_motor_gear_ratio,
             Constants.catapult_motor_inverted,
         )
-        self.catapult = Catapult(self.catapult_motor)
+        self.catapult_motor.set_stopping(HOLD)
+        self.catapult = Catapult(self.catapult_motor, brain.timer)
+        self.catapult_toggled_last_tick = False
 
         self.climber_motor = Motor(
             Constants.climber_motor_port,
@@ -112,6 +117,7 @@ class Robot:
             autonomous_log_object,
             self.drivetrain,
             self.intake,
+            self.climber,
             self.catapult,
             self.wings,
             self.terminal,
@@ -126,6 +132,9 @@ class Robot:
         # Wait for setup to finish
         while not self.setup_complete:
             wait(5)
+        self.driver_control_start_time = self.brain.timer.time(SECONDS)
+        self.wings.wings_in()
+        self.climber.climber_motor.set_max_torque(100, PERCENT)
         while True:
             if not self.disable_driver_control:
                 # The joysticks report outputs in the range -100 to 100, but it is easier to do math on inputs in the range
@@ -174,16 +183,23 @@ class Robot:
                 else:
                     self.intake.stop()
 
-                if self.primary_controller.buttonA.pressing():
-                    self.catapult.start_firing()
+                if self.autonomous_task is SkillsAutonomous:
+                    if self.primary_controller.buttonB.pressing():
+                        if not self.catapult_toggled_last_tick:
+                            self.catapult.firing = not self.catapult.firing
+                        self.catapult_toggled_last_tick = True
+                    else:
+                        self.catapult_toggled_last_tick = False
                 else:
-                    self.catapult.stop_firing()
+                    if self.primary_controller.buttonB.pressing():
+                        self.catapult.start_firing()
+                    else:
+                        self.catapult.stop_firing()
 
                 if self.primary_controller.buttonY.pressing():
-                    self.wings.wings_out()
-                else:
-                    self.wings.wings_in()
-
+                    self.wings.toggle_wings()
+                    while self.primary_controller.buttonY.pressing():
+                        pass
                 if self.primary_controller.buttonL2.pressing():
                     self.climber.set_velocity(1)
                 elif self.primary_controller.buttonR2.pressing():
@@ -191,40 +207,10 @@ class Robot:
                 else:
                     self.climber.set_velocity(0)
 
-    def debug_thread(self):
-        # Runs as a background thread during driver control to provide debugging functionality
-        while True:
-            # self.drivetrain_position_log.log(
-            #     str(self.brain.timer.time(SECONDS))
-            #     + ", "
-            #     + str(self.drivetrain.current_position)
-            #     + ", "
-            #     + str(self.drivetrain.current_direction_rad)
-            #     + "\n"
-            # )
-            wait(20, MSEC)
-            # if self.primary_controller.buttonLeft.pressing():
-            #     self.drivetrain.turn_to_face_heading_deg(90)
-            #     for _ in range(100):
-            #         self.drivetrain.update_direction_PID()
-            #         self.drivetrain.stop()
-            #         wait(10, MSEC)
-            #     self.drivetrain.rotation_PID.setpoint = (
-            #         self.drivetrain.current_direction_rad
-            #     )
-            #     self.drivetrain.clear_direction_PID_output()
-            #     self.drivetrain.target_position = self.drivetrain.current_position
-            # elif self.primary_controller.buttonRight.pressing():
-            #     self.drivetrain.turn_to_face_heading_deg(0)
-            #     for _ in range(100):
-            #         self.drivetrain.update_direction_PID()
-            #         self.drivetrain.stop()
-            #         wait(10, MSEC)
-            #     self.drivetrain.rotation_PID.setpoint = (
-            #         self.drivetrain.current_direction_rad
-            #     )
-            #     self.drivetrain.clear_direction_PID_output()
-            #     self.drivetrain.target_position = self.drivetrain.current_position
+                if self.primary_controller.buttonRight.pressing():
+                    self.climber.toggle_locked()
+                    while self.primary_controller.buttonRight.pressing():
+                        pass
 
     def display_thread(self):
         # Runs as a background thread during driver control to display information about the robot on the screen
@@ -322,7 +308,6 @@ class Robot:
 
         for _function in (
             self.on_driver_control,
-            self.debug_thread,
             self.display_thread,
         ):
             self.driver_control_threads.append(Thread(_function))
@@ -374,9 +359,9 @@ class Robot:
                 self.autonomous_task = SkillsAutonomous  # WinPointAutonomous
             else:
                 if setup_ui.robot_position == Constants.defensive | Constants.red:
-                    self.autonomous_task = TestAuto
+                    self.autonomous_task = WinPointAutonomous
                 elif setup_ui.robot_position == Constants.defensive | Constants.blue:
-                    self.autonomous_task = TestAuto
+                    self.autonomous_task = WinPointAutonomous
                 elif setup_ui.robot_position == Constants.offensive | Constants.red:
                     self.autonomous_task = ScoringAutonomous
                 elif setup_ui.robot_position == Constants.offensive | Constants.blue:
@@ -391,6 +376,7 @@ class Robot:
         # Ensure you set the direction of the robot after the inertial sensor is calibrated or calibrating will wipe your setting
         self.drivetrain.current_position = Constants.robot_start_position
         self.autonomous_startup_position = Constants.robot_start_position
+
         self.drivetrain.current_direction_rad = math.radians(
             Constants.robot_start_rotation_deg
         )

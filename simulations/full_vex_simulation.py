@@ -1,6 +1,5 @@
 import pyglet
 from pyglet import image, shapes, text
-from threading import Thread
 
 controller_back = image.load("./Controller_front.png")
 controller_top = image.load("./Controller_top.png")

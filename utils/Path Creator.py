@@ -4,23 +4,25 @@ import os
 import numpy as np
 import pygame
 
+is_nuitka = "__compiled__" in globals()
+
 # Pygame setup
 pygame.init()
 SCREEN_SIZE = SCREEN_WIDTH, SCREEN_HEIGHT = 800, 800
 FIELD_WIDTH, FIELD_HEIGHT = 366, 366
 
+BASE_DIR = os.path.dirname(__file__) if is_nuitka else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 SRC_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"
+    BASE_DIR, "src"
 )
 DEPLOY_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "deploy"
+    BASE_DIR, "deploy"
 )
 
 BACKGROUND_FILE = os.path.join(DEPLOY_DIR, "images", "Field.png")
 
-background = pygame.image.load(BACKGROUND_FILE)
-
-background = pygame.transform.scale(background, SCREEN_SIZE)
+background = pygame.transform.scale(pygame.image.load(BACKGROUND_FILE), SCREEN_SIZE)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Path Generator")
@@ -72,7 +74,7 @@ def get_closest_point_index(x, y):
     closest_index = None
 
     for i, (px, py) in enumerate(zip(x_points, y_points)):
-        distance = math.hypot((x - px) + (y - py))
+        distance = math.hypot((x - px), (y - py))
         if distance < min_distance:
             min_distance = distance
             closest_index = i

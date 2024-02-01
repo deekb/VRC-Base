@@ -362,18 +362,7 @@ class Drivetrain:
                 wait(5, MSEC)
 
     def turn_to_face_heading_deg(self, heading_deg, wait_=True):
-        # Calculate the optimal turn, this will return a number between -pi and pi
-        # that the drivetrain should rotate in order to end facing the correct direction
-        angular_difference = self.calculate_optimal_turn(math.radians(heading_deg))
-        self.rotation_PID.setpoint += angular_difference
-        if wait_:
-            while (
-                abs(self._odometry.rotation_rad - self.rotation_PID.setpoint)
-                > Constants.drivetrain_allowed_directional_error_rad
-            ):
-                self.update_direction_PID()
-                self.stop()  # In order to not move but continue turning
-                wait(5, MSEC)
+        self.turn_to_face_heading_rad(math.radians(heading_deg))
 
     def stop(self):
         self.move(0, 0, 0)

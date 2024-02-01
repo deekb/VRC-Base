@@ -16,7 +16,7 @@ FIELD_SIZE = (122, 122)
 
 
 def get_path(start_position, target_position):
-    with open(os.path.join(os.pardir, os.pardir, "available_positions.txt"), "r") as f:
+    with open(os.path.join("available_positions.txt"), "r") as f:
         accessible_tiles = set(eval(f.read()))
 
     valid_moves = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]

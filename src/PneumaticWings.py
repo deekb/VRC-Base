@@ -16,12 +16,15 @@ class Wings:
     def wings_in(self):
         self.wings_state = Constants.PneumaticsState.in_
 
+    def toggle_wings(self):
+        self.wings_state = Constants.PneumaticsState.out if self.wings_state == Constants.PneumaticsState.in_ else Constants.PneumaticsState.in_
+
     def wings_loop(self):
         while True:
             if self.wings_state == Constants.PneumaticsState.in_:
                 self.wings.set(False)
 
-            if self.wings_state == Constants.PneumaticsState.in_:
-                self.wings.set(False)
+            if self.wings_state == Constants.PneumaticsState.out:
+                self.wings.set(True)
 
             wait(100, MSEC)

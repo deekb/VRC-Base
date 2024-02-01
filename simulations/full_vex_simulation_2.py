@@ -1,7 +1,10 @@
-import pyglet
-from pyglet import image, shapes
+import threading
 
-controller_back = image.load("./Controller_front.png")
+import pyglet
+
+pyglet.options["debug_gl"] = False
+
+controller_back = pyglet.image.load("./Controller_front.png")
 
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = int(WINDOW_WIDTH * (controller_back.height / controller_back.width))
@@ -61,6 +64,8 @@ BRAIN_SCREEN_HEIGHT = 240
 
 log_window = None
 
+competition_switch_inserted = False
+
 
 class MomentaryButton:
     def __init__(self, sprite, initial_state=False):
@@ -98,7 +103,10 @@ class ToggleButton:
 class ControllerTopViewWindow(pyglet.window.Window):
     def __init__(self, width, height):
         super().__init__(width, height)
-        self.controller_top_view_image = image.load("./Controller_top.png")
+
+        self.set_caption("Controller Top View")
+
+        self.controller_top_view_image = pyglet.image.load("./Controller_top.png")
         self.controller_top_view_sprite = pyglet.sprite.Sprite(
             self.controller_top_view_image
         )
@@ -106,29 +114,29 @@ class ControllerTopViewWindow(pyglet.window.Window):
         self.controller_top_view_sprite.width = width
         self.batch = pyglet.graphics.Batch()
 
-        self.left_trigger_polygon = shapes.Polygon(
+        self.left_trigger_polygon = pyglet.shapes.Polygon(
             *LEFT_TRIGGER_BOUNDING_BOX, color=(0, 225, 0), batch=self.batch
         )
 
-        self.right_trigger_polygon = shapes.Polygon(
+        self.right_trigger_polygon = pyglet.shapes.Polygon(
             *RIGHT_TRIGGER_BOUNDING_BOX,
             color=(0, 225, 0),
             batch=self.batch,
         )
 
-        self.left_bumper_polygon = shapes.Polygon(
+        self.left_bumper_polygon = pyglet.shapes.Polygon(
             *LEFT_BUMPER_BOUNDING_BOX,
             color=(0, 225, 0),
             batch=self.batch,
         )
 
-        self.right_bumper_polygon = shapes.Polygon(
+        self.right_bumper_polygon = pyglet.shapes.Polygon(
             *RIGHT_BUMPER_BOUNDING_BOX,
             color=(0, 225, 0),
             batch=self.batch,
         )
 
-        self.competition_switch_port_polygon = shapes.Polygon(
+        self.competition_switch_port_polygon = pyglet.shapes.Polygon(
             *COMPETITION_SWITCH_PORT_BOUNDING_BOX,
             color=(0, 0, 0),
             batch=self.batch,
@@ -141,6 +149,7 @@ class ControllerTopViewWindow(pyglet.window.Window):
         self.competition_switch = ToggleButton(self.competition_switch_port_polygon)
 
     def on_draw(self):
+        global competition_switch_inserted
         self.clear()
         self.controller_top_view_sprite.draw()
         if self.left_bumper.get_state():
@@ -156,6 +165,7 @@ class ControllerTopViewWindow(pyglet.window.Window):
         else:
             self.competition_switch.sprite.color = (255, 0, 0)
         self.competition_switch.sprite.draw()
+        competition_switch_inserted = self.competition_switch.get_state()
 
     def on_mouse_press(self, x, y, *_):
         point = (x, y)
@@ -179,7 +189,7 @@ class ControllerTopViewWindow(pyglet.window.Window):
             else:
                 log_window.append_to_log("Competition switch removed")
         else:
-            print(f"Press at {x, y}")
+            log_window.append_to_log(f"Press at {x, y}")
 
     def on_mouse_release(self, x, y, *_):
         point = (x, y)
@@ -200,50 +210,53 @@ class ControllerTopViewWindow(pyglet.window.Window):
 class ControllerFrontViewWindow(pyglet.window.Window):
     def __init__(self, width, height):
         super().__init__(width, height)
-        self.controller_front_view_image = image.load("./Controller_front.png")
+
+        self.set_caption("Controller Front View")
+
+        self.controller_front_view_image = pyglet.image.load("./Controller_front.png")
         self.controller_front_view_sprite = pyglet.sprite.Sprite(
             self.controller_front_view_image
         )
         self.controller_front_view_sprite.height = height
         self.controller_front_view_sprite.width = width
 
-        self.button_left_circle = shapes.Circle(
+        self.button_left_circle = pyglet.shapes.Circle(
             *BUTTON_LEFT_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.button_right_circle = shapes.Circle(
+        self.button_right_circle = pyglet.shapes.Circle(
             *BUTTON_RIGHT_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.button_up_circle = shapes.Circle(
+        self.button_up_circle = pyglet.shapes.Circle(
             *BUTTON_DOWN_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.button_down_circle = shapes.Circle(
+        self.button_down_circle = pyglet.shapes.Circle(
             *BUTTON_UP_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.button_a_circle = shapes.Circle(
+        self.button_a_circle = pyglet.shapes.Circle(
             *BUTTON_A_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.button_b_circle = shapes.Circle(
+        self.button_b_circle = pyglet.shapes.Circle(
             *BUTTON_B_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.button_x_circle = shapes.Circle(
+        self.button_x_circle = pyglet.shapes.Circle(
             *BUTTON_X_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.button_y_circle = shapes.Circle(
+        self.button_y_circle = pyglet.shapes.Circle(
             *BUTTON_Y_CENTER_POINT, BUTTON_RADIUS, color=(0, 255, 0)
         )
 
-        self.left_joystick_circle = shapes.Circle(
+        self.left_joystick_circle = pyglet.shapes.Circle(
             *LEFT_JOYSTICK_CENTER_POINT, JOYSTICK_RADIUS, color=(0, 255, 0)
         )
 
-        self.right_joystick_circle = shapes.Circle(
+        self.right_joystick_circle = pyglet.shapes.Circle(
             *RIGHT_JOYSTICK_CENTER_POINT, JOYSTICK_RADIUS, color=(0, 255, 0)
         )
 
@@ -338,6 +351,9 @@ class ControllerFrontViewWindow(pyglet.window.Window):
 class LogWindow(pyglet.window.Window):
     def __init__(self, width, height):
         super().__init__(width, height)
+
+        self.set_caption("Log Window")
+
         self.document = pyglet.text.document.FormattedDocument("Started log\n")
 
         self.document.set_style(
@@ -375,11 +391,42 @@ class BrainScreenWindow(pyglet.window.Window):
     def __init__(self, width, height):
         super().__init__(width, height)
 
+        self.set_caption("Brain Screen")
+
+        self.batch = pyglet.graphics.Batch()
+        self.on_screen_objects = []
+
     def on_draw(self):
         self.clear()
+        for obj in self.on_screen_objects:
+            obj.batch = self.batch
+        self.batch.draw()
+
+    def draw_circle(self, x, y, radius):
+        self.on_screen_objects.append(
+            pyglet.shapes.Circle(x, y, radius, color=(50, 225, 30))
+        )
+
+    def draw_rectangle(self, x, y, width, height):
+        self.on_screen_objects.append(
+            pyglet.shapes.Rectangle(x, y, width, height, color=(50, 225, 30))
+        )
 
 
-if __name__ == "__main__":
+class CompetitionSwitchWindow(pyglet.window.Window):
+    def __init__(self, width, height):
+        super().__init__(width, height)
+
+        self.set_caption("Competition Switch")
+
+    def on_draw(self):
+        global competition_switch_inserted
+        self.clear()
+        self.set_visible(competition_switch_inserted)
+
+
+def pyglet_thread_function():
+    global log_window
     controller_top_view_window = ControllerTopViewWindow(WINDOW_WIDTH, WINDOW_HEIGHT)
     controller_front_view_window = ControllerFrontViewWindow(
         WINDOW_WIDTH, WINDOW_HEIGHT
@@ -388,13 +435,23 @@ if __name__ == "__main__":
     controller_front_view_window.set_location(
         controller_top_view_window_location[0] + controller_top_view_window.width,
         controller_top_view_window_location[1],
-    )
+        )
     log_window = LogWindow(WINDOW_WIDTH, WINDOW_HEIGHT)
     log_window.set_location(
         controller_top_view_window_location[0]
         + controller_top_view_window.width
         + controller_front_view_window.width,
         controller_top_view_window_location[1],
-    )
+        )
     brain_screen_window = BrainScreenWindow(WINDOW_WIDTH, WINDOW_HEIGHT)
+    competition_switch_window = CompetitionSwitchWindow(WINDOW_WIDTH, WINDOW_HEIGHT)
+    brain_screen_window.draw_circle(100, 100, 10)
+    brain_screen_window.draw_circle(50, 100, 10)
+    brain_screen_window.draw_circle(100, 50, 30)
     pyglet.app.run()
+
+
+if __name__ == "__main__":
+    pyglet_thread = threading.Thread(target=pyglet_thread_function)
+    pyglet_thread.start()
+    pyglet_thread.join()

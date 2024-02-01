@@ -20,6 +20,7 @@ class NothingAutonomous(AutonomousRoutine):
         log_object,
         drivetrain,
         intake,
+        climber,
         catapult,
         wings,
         terminal,
@@ -48,6 +49,7 @@ class TestAuto(AutonomousRoutine):
         log_object,
         drivetrain,
         intake,
+        climber,
         catapult,
         wings,
         terminal,
@@ -79,6 +81,7 @@ class ScoringAutonomous(AutonomousRoutine):
         log_object,
         drivetrain,
         intake,
+        climber,
         catapult,
         wings,
         terminal,
@@ -103,9 +106,14 @@ class ScoringAutonomous(AutonomousRoutine):
 
         self.drivetrain.stop()
 
-        self.drivetrain.forward(12, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-135))
-        self.drivetrain.forward(75, 0.8)
+        self.drivetrain.forward(7.5, 0.8)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-45 - 90))
+        self.wings.wings_out()
+        self.drivetrain.forward(20, 0.8)
+        self.drivetrain.strafe_right(10, 0.8)
+        self.drivetrain.forward(30, 0.8)
+        self.wings.wings_in()
+        self.drivetrain.forward(17, 0.8)
         self.drivetrain.turn_to_face_heading_rad(-math.pi / 2)
         self.intake.spit_out()
         self.drivetrain.forward(30, 0.8)
@@ -164,6 +172,7 @@ class ScoringAutonomous4(AutonomousRoutine):
         log_object,
         drivetrain,
         intake,
+        climber,
         catapult,
         wings,
         terminal,
@@ -256,6 +265,7 @@ class SabotageAutonomous(AutonomousRoutine):
         log_object,
         drivetrain,
         intake,
+        climber,
         catapult,
         wings,
         terminal,
@@ -321,6 +331,7 @@ class WinPointAutonomous(AutonomousRoutine):
         log_object,
         drivetrain,
         intake,
+        climber,
         catapult,
         wings,
         terminal,
@@ -347,23 +358,24 @@ class WinPointAutonomous(AutonomousRoutine):
 
         self.drivetrain.forward(7.5, 0.4)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-45))
-        self.wings.left_wing_out()
+        self.wings.wings_out()
         self.drivetrain.forward(20, 0.4)
         self.drivetrain.strafe_left(10, 0.4)
         self.drivetrain.forward(30, 0.4)
-        self.wings.left_wing_in()
+        self.wings.wings_in()
         self.drivetrain.strafe_right(20, 0.4)
         self.drivetrain.forward(20, 0.4)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
         self.intake.spit_out()
-        wait(1000, MSEC)
-        self.intake.stop()
-        self.drivetrain.forward(5, 0.6)
+        self.drivetrain.forward(5, 0.4)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-45 + 180))
+        self.drivetrain.forward(80, 0.4)
         self.drivetrain.turn_to_face_heading_rad(math.radians(180))
-        self.drivetrain.forward(130, 1)
-        self.wings.right_wing_out()
-        self.drivetrain.turn_to_face_heading_rad(math.radians(200))
-        wait(500, MSEC)
+        self.drivetrain.forward(65, 0.4)
+        self.drivetrain.strafe_left(10, 0.5)
+        self.drivetrain.turn_to_face_heading_rad(math.radians(170))
+
+        self.wings.wings_out()
 
         self.log("Done")
         self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad
@@ -381,6 +393,7 @@ class SkillsAutonomous(AutonomousRoutine):
         log_object,
         drivetrain,
         intake,
+        climber,
         catapult,
         wings,
         terminal,
@@ -390,6 +403,7 @@ class SkillsAutonomous(AutonomousRoutine):
         self.terminal = terminal
         self.drivetrain = drivetrain
         self.intake = intake
+        self.climber = climber
         self.catapult = catapult
         self.wings = wings
         self.drivetrain.current_position = startup_position
@@ -402,50 +416,37 @@ class SkillsAutonomous(AutonomousRoutine):
 
     def run(self):
         self.log("Starting skills autonomous")
-
         self.drivetrain.stop()
 
-        self.drivetrain.forward(12, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-135))
-        self.drivetrain.forward(75, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(-math.pi / 2)
-        self.drivetrain.forward(10, 1)
-        self.intake.spit_out()
-        self.drivetrain.forward(20, 1)
-        # Push the first triball into the goal
-        self.drivetrain.backwards(28, 0.8)
-        self.intake.stop()
-        self.drivetrain.strafe_left(30, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-45))
-        self.drivetrain.backwards(40, 0.4)
+        self.climber.climber_motor.power()
+
+        self.climber.set_velocity(50)
+
         self.drivetrain.strafe_left(40, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-30))
-        # self.drivetrain.backwards(5, 0.4)
+        self.drivetrain.turn_to_face_heading_deg(-90 - 25)
 
         self.drivetrain.clear_direction_PID_output()
         self.drivetrain.target_position = self.drivetrain.current_position
         self.drivetrain.stop()
+        self.climber.climber_motor.set_max_torque(20, PERCENT)
+        while abs(self.climber.climber_motor.velocity()) > 40:
+            pass
+        self.climber.climber_motor.set_max_torque(100, PERCENT)
+        self.climber.set_velocity(0)
 
-        self.catapult.fire_for_rotations(50)
+        self.catapult.start_firing()
+        wait(47, SECONDS)
+        self.catapult.stop()
 
-        self.drivetrain.turn_to_face_heading_rad(math.radians(25))
-        self.drivetrain.forward(50, 0.8)
-        self.drivetrain.turn_to_face_heading_rad(0)
-        self.drivetrain.forward(40, 1)
-        self.intake.pull_in()
-        self.drivetrain.forward(50, 1)
-        self.intake.stop()
-        self.drivetrain.forward(85, 1)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
-        self.drivetrain.forward(60, 1)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(180))
-        self.drivetrain.forward(30, 1)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-90))
-        self.drivetrain.forward(50, 1)
-        self.drivetrain.turn_to_face_heading_rad(math.radians(0))
-        self.wings.wings_out()
-        self.drivetrain.forward(60, 1)
-        self.drivetrain.backwards(60, 1)
+        self.drivetrain.turn_to_face_heading_deg(-90 - 70)
+        self.drivetrain.forward(90, 0.4)
+        self.drivetrain.turn_to_face_heading_deg(-90 - 45)
+        self.drivetrain.forward(65, 0.4)
+        self.climber.set_velocity(-100)
+        self.climber.set_locked(False)
+        while self.climber.climber_motor.position(DEGREES) > 50:
+            pass
+        self.climber.set_velocity(0)
 
         self.log("Done")
         self.drivetrain.rotation_PID.setpoint = self.drivetrain.current_direction_rad

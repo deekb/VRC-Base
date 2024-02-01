@@ -518,3 +518,9 @@ def cubic_filter(value, linearity=0) -> float:
         raise ValueError("Linearity may not be infinite")
 
     return (value**3 + linearity * value) / (1 + linearity)
+
+
+def sign(x):
+    if x == 0:
+        return 0
+    return x / abs(x)
