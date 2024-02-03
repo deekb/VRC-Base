@@ -192,7 +192,7 @@ phosphorus_bmp_size_y = 37
 
 robot_start_position = 20, 78  # (field_x_size / 2, field_y_size / 2)
 robot_start_rotation_deg = 90
-drivetrain_braking = True
+drivetrain_braking = False
 
 log_directory = "/logs/"
 deploy_directory = "/deploy/"

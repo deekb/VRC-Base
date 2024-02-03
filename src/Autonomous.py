@@ -106,54 +106,53 @@ class ScoringAutonomous(AutonomousRoutine):
 
         self.drivetrain.stop()
 
-        self.drivetrain.forward(7.5, 0.8)
+        self.drivetrain.forward(7.5, 0.6)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-45 - 90))
         self.wings.wings_out()
-        self.drivetrain.forward(20, 0.8)
-        self.drivetrain.strafe_right(10, 0.8)
-        self.drivetrain.forward(30, 0.8)
+        self.drivetrain.forward(20, 0.6)
+        # self.drivetrain.strafe_right(10, 0.6)
+        self.drivetrain.forward(30, 0.6)
         self.wings.wings_in()
-        self.drivetrain.forward(17, 0.8)
+        self.drivetrain.forward(17, 0.6)
         self.drivetrain.turn_to_face_heading_rad(-math.pi / 2)
         self.intake.spit_out()
-        self.drivetrain.forward(30, 0.8)
+        self.drivetrain.forward(30+5, 0.6)
         # Push the first triball into the goal
-        self.drivetrain.backwards(28, 0.8)
+        self.drivetrain.backwards(28+5, 0.6)
         self.intake.stop()
 
         self.drivetrain.turn_to_face_heading_rad(math.radians(-19))  # -20
-        self.drivetrain.forward(120, 0.8)
+        self.drivetrain.forward(120, 0.6)
         self.intake.pull_in()
         # Grab the second triball
-        self.drivetrain.forward(10, 0.8)
-        self.drivetrain.backwards(10, 0.8)
+        self.drivetrain.forward(10, 0.6)
+        self.drivetrain.backwards(10, 0.6)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-140))
 
-        self.intake.spit_out()
-        self.drivetrain.forward(20, 0.8)
-        self.drivetrain.forward(50, 0.8)
-        self.intake.stop()
+        self.drivetrain.forward(20, 0.6)
+        self.drivetrain.forward(50, 0.6)
         self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
         self.intake.spit_out()
-        wait(250, MSEC)
+        wait(400, MSEC)
         # Score the second triball
-        self.drivetrain.forward(18, 0.8)
-        self.drivetrain.backwards(6, 0.5)
+        self.drivetrain.forward(18+5, 0.6)
+        self.drivetrain.backwards(6+5, 0.5)
 
         self.intake.pull_in()
-        self.drivetrain.turn_to_face_heading_rad(math.radians(-40))
+        self.drivetrain.turn_to_face_heading_rad(math.radians(-40 - 12))
 
         self.drivetrain.forward(40, 0.4)
 
         self.drivetrain.backwards(15, 1)
 
-        self.intake.stop()
         self.drivetrain.turn_to_face_heading_rad(math.radians(-180))
-        self.intake.spit_out()
-        self.drivetrain.forward(20, 1)
+        self.intake.stop()
 
-        self.drivetrain.forward(15, 1)
-        self.drivetrain.backwards(15, 1)
+        self.intake.spit_out()
+        wait(200, MSEC)
+        # self.drivetrain.forward(20, 1)
+        self.drivetrain.forward(35+5, 1)
+        self.drivetrain.backwards(15+5, 1)
         self.intake.stop()
 
         self.log("Done")
