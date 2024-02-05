@@ -452,7 +452,7 @@ class SkillsAutonomous(AutonomousRoutine):
         self.drivetrain.clear_direction_PID_output()
         self.drivetrain.target_position = self.drivetrain.current_position
 
-        self.drivetrain.stop()
+        self.drivetrain.stop_firing()
 
         self.log_object.exit()
 
