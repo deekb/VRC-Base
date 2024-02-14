@@ -29,7 +29,9 @@ DEPLOY_DIRECTORY = os.path.join(
 
 def exclude_from_deploy(filename):
     # This function tells the program which files to ignore while scanning the "deploy" directory
-    return filename.endswith(".svg") or filename.endswith("~") or filename.startswith("~")
+    return (
+        filename.endswith(".svg") or filename.endswith("~") or filename.startswith("~")
+    )
 
 
 MAIN_PROGRAM = os.path.join(SRC_DIRECTORY, "main.py")
@@ -81,10 +83,9 @@ def mount_drive(drive_path):
 
 def unmount_drive(drive_path):
     if ON_WINDOWS:
-        eject_command = (
-            "powershell $driveEject = New-Object -comObject Shell.Application;"
-        )
-        eject_command += f'$driveEject.Namespace(17).ParseName("""{drive_path}""").InvokeVerb("""Eject""")'
+        eject_command = f'powershell $driveEject = New-Object -comObject Shell.Application;\
+        $driveEject.Namespace(17).ParseName("""{drive_path}""").InvokeVerb("""Eject""")'
+
         subprocess.run(eject_command, check=True)
     elif ON_UNIX:
         subprocess.run(["umount", drive_path], check=True)

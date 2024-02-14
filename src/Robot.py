@@ -26,15 +26,16 @@ __license__ = "MIT"
 import math
 
 import Constants
-from Autonomous import (
-    ScoringAutonomous,
-    ScoringAutonomous4,
-    SabotageAutonomous,
-    NothingAutonomous,
-    SkillsAutonomous,
-    WinPointAutonomous,
-    TestAuto,
-)
+from Autonomous import NothingAutonomous, WinPointAutonomous, ScoringAutonomous4
+from OldAutonomous import SkillsAutonomous
+
+# from Autonomous import (
+#     ScoringAutonomous,
+#     NothingAutonomous,
+#     SkillsAutonomous,
+#     WinPointAutonomous,
+#     TestAuto,
+# )
 from Catapult import Catapult
 from Climber import Climber
 from HolonomicDrivetrain import Drivetrain
@@ -113,17 +114,7 @@ class Robot:
             return
         autonomous_log_object = Logging(log_name="Autonomous")
 
-        autonomous = self.autonomous_task(
-            autonomous_log_object,
-            self.drivetrain,
-            self.intake,
-            self.climber,
-            self.catapult,
-            self.wings,
-            self.terminal,
-            self.autonomous_startup_position,
-        )
-        autonomous.run()
+        self.autonomous_task(self, autonomous_log_object).run()
 
     def on_driver_control(self):
         """
@@ -132,6 +123,8 @@ class Robot:
         # Wait for setup to finish
         while not self.setup_complete:
             wait(5)
+        self.drivetrain.set_braking(False)
+
         self.driver_control_start_time = self.brain.timer.time(SECONDS)
         self.wings.wings_in()
         self.climber.climber_motor.set_max_torque(100, PERCENT)
@@ -321,23 +314,6 @@ class Robot:
             thread.stop()
         self.print("Stopped all driver control tasks")
 
-    def setup_controller_bindings(self):
-        """
-        Run when the robot boots up, after the setup process, sets up controller button callbacks
-        """
-        # self.primary_controller.buttonL1.pressed(
-        #     lambda: setattr(self.drivetrain, "target_heading_deg", 0)
-        # )
-        # self.primary_controller.buttonL2.pressed(
-        #     lambda: setattr(self.drivetrain, "target_heading_deg", 90)
-        # )
-        # self.primary_controller.buttonR1.pressed(
-        #     lambda: setattr(self.drivetrain, "target_heading_deg", 180)
-        # )
-        # self.primary_controller.buttonR2.pressed(
-        #     lambda: setattr(self.drivetrain, "target_heading_deg", 270)
-        # )
-
     def main(self):
         """
         initializes and sets up the robot, including calibrating sensors, selecting an autonomous routine, and setting
@@ -358,16 +334,16 @@ class Robot:
             wait(1000, MSEC)
 
             if setup_ui.team == Constants.Team.skills:
-                self.autonomous_task = SkillsAutonomous  # WinPointAutonomous
+                self.autonomous_task = WinPointAutonomous
             else:
                 if setup_ui.robot_position == Constants.defensive | Constants.red:
-                    self.autonomous_task = WinPointAutonomous
+                    self.autonomous_task = ScoringAutonomous4
                 elif setup_ui.robot_position == Constants.defensive | Constants.blue:
-                    self.autonomous_task = WinPointAutonomous
+                    self.autonomous_task = ScoringAutonomous4
                 elif setup_ui.robot_position == Constants.offensive | Constants.red:
-                    self.autonomous_task = ScoringAutonomous
+                    self.autonomous_task = ScoringAutonomous4
                 elif setup_ui.robot_position == Constants.offensive | Constants.blue:
-                    self.autonomous_task = ScoringAutonomous
+                    self.autonomous_task = ScoringAutonomous4
 
         self.brain.screen.set_fill_color(Color.TRANSPARENT)
         self.brain.screen.set_pen_color(Color.WHITE)
@@ -383,9 +359,6 @@ class Robot:
             Constants.robot_start_rotation_deg
         )
         self.drivetrain.target_heading_rad = Constants.robot_start_rotation_deg
-
-        # Set up controller callbacks here to avoid triggering them by pressing buttons during setup
-        self.setup_controller_bindings()
 
         self.print("Robot:INFO: Setup complete")
         self.primary_controller.rumble(".")

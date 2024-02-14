@@ -3,6 +3,7 @@ import Constants
 import math
 from Utilities import *
 import TrapezoidMovement
+from PIDController import PIDController
 
 x_axis = Constants.ControllerAxis.x_axis
 y_axis = Constants.ControllerAxis.y_axis
@@ -205,15 +206,21 @@ class Drivetrain:
             speed = distance_remaining_pid.update(-distance_remaining)
 
             self.print("distance_remaining: " + str(distance_remaining))
-            self.print("distance_remaining_pid.setpoint: " + str(distance_remaining_pid.setpoint))
+            self.print(
+                "distance_remaining_pid.setpoint: "
+                + str(distance_remaining_pid.setpoint)
+            )
             self.print("distance_remaining_pid output: " + str(speed))
             self.print("target_state: " + str(target_state))
             self.print("target_state.position: " + str(target_state.position))
             self.print("target_state.velocity: " + str(target_state.velocity))
             self.print("elapsed_time: " + str(elapsed_time))
-            self.print("movement_profile.isFinished: " + str(movement_profile.isFinished(elapsed_time)))
+            self.print(
+                "movement_profile.isFinished: "
+                + str(movement_profile.is_finished(elapsed_time))
+            )
 
-            if movement_profile.isFinished(elapsed_time):
+            if movement_profile.is_finished(elapsed_time):
                 # We have overshot
                 break
 
@@ -223,6 +230,7 @@ class Drivetrain:
 
     def follow_path(self, point_list, maximum_speed):
         for point in point_list:
+            self.turn_to_face_position(point)
             self.move_to_position(point, maximum_speed)
         self.stop()
 
@@ -312,7 +320,9 @@ class Drivetrain:
         self._front_right_motor.set_velocity(
             target_front_right_wheel_speed * 142.8, PERCENT
         )
-        self._rear_left_motor.set_velocity(target_rear_left_wheel_speed * 142.8, PERCENT)
+        self._rear_left_motor.set_velocity(
+            target_rear_left_wheel_speed * 142.8, PERCENT
+        )
         self._rear_right_motor.set_velocity(
             target_rear_right_wheel_speed * 142.8, PERCENT
         )
@@ -393,6 +403,9 @@ class Drivetrain:
         self._current_target_x_cm = 0
         self._current_target_y_cm = 0
         self._odometry.reset()
+        self.current_position = (0, 0)
+        self.rotation_PID.setpoint = self.current_direction_rad
+        self.target_position = self.current_position
 
     @property
     def target_position(self):

@@ -20,5 +20,9 @@ brain.screen.set_cursor(1, 1)
 from Robot import Robot
 
 if __name__ == "__main__":
-    robot = Robot(brain)
-    robot.main()
+    while True:
+        robot = Robot(brain)
+        robot.main()
+        while not robot.restart_requested:
+            pass
+        del robot

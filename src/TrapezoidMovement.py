@@ -5,9 +5,9 @@ class Constraints:
     maxVelocity: float
     maxAcceleration: float
 
-    def __init__(self, maxVelocity, maxAcceleration):
-        self.maxVelocity = maxVelocity
-        self.maxAcceleration = maxAcceleration
+    def __init__(self, max_velocity, max_acceleration):
+        self.maxVelocity = max_velocity
+        self.maxAcceleration = max_acceleration
 
 
 class State:
@@ -21,148 +21,148 @@ class State:
 
 class TrapezoidProfile:
     def __init__(self, constraints):
-        self.m_constraints = constraints
-        self.m_newAPI = True
-        self.m_direction = 1
-        self.m_current = State()
-        self.m_goal = State()
-        self.m_endAccel = 0.0
-        self.m_endFullSpeed = 0.0
-        self.m_endDeccel = 0.0
+        self.constraints = constraints
+        self.newAPI = True
+        self.direction = 1
+        self.current = State()
+        self.goal = State()
+        self.end_accel = 0.0
+        self.end_full_speed = 0.0
+        self.end_deccel = 0.0
 
     @staticmethod
     def should_flip_acceleration(initial, goal):
         return initial.position > goal.position
 
-    def direct(self, inp):
+    def _direct(self, inp):
         result = State(inp.position, inp.velocity)
-        result.position = result.position * self.m_direction
-        result.velocity = result.velocity * self.m_direction
+        result.position = result.position * self.direction
+        result.velocity = result.velocity * self.direction
         return result
 
     def calculate(self, t, current, goal):
-        self.m_direction = -1 if self.should_flip_acceleration(current, goal) else 1
-        self.m_current = self.direct(current)
-        goal = self.direct(goal)
+        self.direction = -1 if self.should_flip_acceleration(current, goal) else 1
+        self.current = self._direct(current)
+        goal = self._direct(goal)
 
-        if self.m_current.velocity > self.m_constraints.maxVelocity:
-            self.m_current.velocity = self.m_constraints.maxVelocity
+        if self.current.velocity > self.constraints.maxVelocity:
+            self.current.velocity = self.constraints.maxVelocity
 
-        cutoffBegin = self.m_current.velocity / self.m_constraints.maxAcceleration
-        cutoffDistBegin = (
-            cutoffBegin * cutoffBegin * self.m_constraints.maxAcceleration / 2.0
+        cutoff_begin = self.current.velocity / self.constraints.maxAcceleration
+        cutoff_dist_begin = (
+                cutoff_begin * cutoff_begin * self.constraints.maxAcceleration / 2.0
         )
 
-        cutoffEnd = goal.velocity / self.m_constraints.maxAcceleration
-        cutoffDistEnd = cutoffEnd * cutoffEnd * self.m_constraints.maxAcceleration / 2.0
+        cutoff_end = goal.velocity / self.constraints.maxAcceleration
+        cutoff_dist_end = cutoff_end * cutoff_end * self.constraints.maxAcceleration / 2.0
 
-        fullTrapezoidDist = (
-            cutoffDistBegin
-            + (goal.position - self.m_current.position)
-            + cutoffDistEnd
+        full_trapezoid_dist = (
+            cutoff_dist_begin
+            + (goal.position - self.current.position)
+            + cutoff_dist_end
         )
-        accelerationTime = self.m_constraints.maxVelocity / self.m_constraints.maxAcceleration
+        acceleration_time = self.constraints.maxVelocity / self.constraints.maxAcceleration
 
-        fullSpeedDist = (
-            fullTrapezoidDist
-            - accelerationTime * accelerationTime * self.m_constraints.maxAcceleration
+        full_speed_dist = (
+            full_trapezoid_dist
+            - acceleration_time * acceleration_time * self.constraints.maxAcceleration
         )
 
-        if fullSpeedDist < 0:
-            accelerationTime = sqrt(fullTrapezoidDist / self.m_constraints.maxAcceleration)
-            fullSpeedDist = 0
+        if full_speed_dist < 0:
+            acceleration_time = sqrt(full_trapezoid_dist / self.constraints.maxAcceleration)
+            full_speed_dist = 0
 
-        self.m_endAccel = accelerationTime - cutoffBegin
-        self.m_endFullSpeed = self.m_endAccel + fullSpeedDist / self.m_constraints.maxVelocity
-        self.m_endDeccel = self.m_endFullSpeed + accelerationTime - cutoffEnd
-        result = State(self.m_current.position, self.m_current.velocity)
+        self.end_accel = acceleration_time - cutoff_begin
+        self.end_full_speed = self.end_accel + full_speed_dist / self.constraints.maxVelocity
+        self.end_deccel = self.end_full_speed + acceleration_time - cutoff_end
+        result = State(self.current.position, self.current.velocity)
 
-        if t < self.m_endAccel:
-            result.velocity += t * self.m_constraints.maxAcceleration
+        if t < self.end_accel:
+            result.velocity += t * self.constraints.maxAcceleration
             result.position += (
-                self.m_current.velocity
-                + t * self.m_constraints.maxAcceleration / 2.0
+                                       self.current.velocity
+                                       + t * self.constraints.maxAcceleration / 2.0
             ) * t
-        elif t < self.m_endFullSpeed:
-            result.velocity = self.m_constraints.maxVelocity
+        elif t < self.end_full_speed:
+            result.velocity = self.constraints.maxVelocity
             result.position += (
-                self.m_current.velocity
-                + self.m_endAccel * self.m_constraints.maxAcceleration / 2.0
-            ) * self.m_endAccel + self.m_constraints.maxVelocity * (t - self.m_endAccel)
-        elif t <= self.m_endDeccel:
+                                       self.current.velocity
+                                       + self.end_accel * self.constraints.maxAcceleration / 2.0
+            ) * self.end_accel + self.constraints.maxVelocity * (t - self.end_accel)
+        elif t <= self.end_deccel:
             result.velocity = (
-                goal.velocity + (self.m_endDeccel - t) * self.m_constraints.maxAcceleration
+                    goal.velocity + (self.end_deccel - t) * self.constraints.maxAcceleration
             )
-            timeLeft = self.m_endDeccel - t
+            time_left = self.end_deccel - t
             result.position = (
                 goal.position
                 - (
-                    goal.velocity
-                    + timeLeft * self.m_constraints.maxAcceleration / 2.0
+                        goal.velocity
+                        + time_left * self.constraints.maxAcceleration / 2.0
                 )
-                * timeLeft
+                * time_left
             )
         else:
             result = goal
 
-        return self.direct(result)
+        return self._direct(result)
 
-    def timeLeftUntil(self, target):
-        position = self.m_current.position * self.m_direction
-        velocity = self.m_current.velocity * self.m_direction
+    def time_left_until(self, target):
+        position = self.current.position * self.direction
+        velocity = self.current.velocity * self.direction
 
-        endAccel = self.m_endAccel * self.m_direction
-        endFullSpeed = self.m_endFullSpeed * self.m_direction - endAccel
+        end_accel = self.end_accel * self.direction
+        end_full_speed = self.end_full_speed * self.direction - end_accel
 
         if target < position:
-            endAccel = -endAccel
-            endFullSpeed = -endFullSpeed
+            end_accel = -end_accel
+            end_full_speed = -end_full_speed
             velocity = -velocity
 
-        endAccel = max(endAccel, 0)
-        endFullSpeed = max(endFullSpeed, 0)
+        end_accel = max(end_accel, 0)
+        end_full_speed = max(end_full_speed, 0)
 
-        acceleration = self.m_constraints.maxAcceleration
-        decceleration = -self.m_constraints.maxAcceleration
+        acceleration = self.constraints.maxAcceleration
+        deceleration = -self.constraints.maxAcceleration
 
-        distToTarget = abs(target - position)
-        if distToTarget < 1e-6:
+        dist_to_target = abs(target - position)
+        if dist_to_target < 1e-6:
             return 0
 
-        accelDist = velocity * endAccel + 0.5 * acceleration * endAccel * endAccel
+        accel_dist = velocity * end_accel + 0.5 * acceleration * end_accel * end_accel
 
-        deccelVelocity = sqrt(
-            abs(velocity * velocity + 2 * acceleration * accelDist)
-        ) if endAccel > 0 else velocity
+        deccel_velocity = sqrt(
+            abs(velocity * velocity + 2 * acceleration * accel_dist)
+        ) if end_accel > 0 else velocity
 
-        fullSpeedDist = self.m_constraints.maxVelocity * endFullSpeed
-        deccelDist = distToTarget - fullSpeedDist - accelDist
+        full_speed_dist = self.constraints.maxVelocity * end_full_speed
+        deccel_dist = dist_to_target - full_speed_dist - accel_dist
 
-        accelTime = (
+        accel_time = (
             -velocity
-            + sqrt(abs(velocity * velocity + 2 * acceleration * accelDist))
+            + sqrt(abs(velocity * velocity + 2 * acceleration * accel_dist))
         ) / acceleration
 
-        deccelTime = (
-            -deccelVelocity
+        deccel_time = (
+            -deccel_velocity
             + sqrt(
                 abs(
-                    deccelVelocity
-                    * deccelVelocity
-                    + 2 * decceleration * deccelDist
+                    deccel_velocity
+                    * deccel_velocity
+                    + 2 * deceleration * deccel_dist
                 )
             )
-        ) / decceleration
+        ) / deceleration
 
-        fullSpeedTime = fullSpeedDist / self.m_constraints.maxVelocity
+        full_speed_time = full_speed_dist / self.constraints.maxVelocity
 
-        return accelTime + fullSpeedTime + deccelTime
+        return accel_time + full_speed_time + deccel_time
 
-    def totalTime(self):
-        return self.m_endDeccel
+    def total_time(self):
+        return self.end_deccel
 
-    def isFinished(self, t):
-        return t >= self.totalTime()
+    def is_finished(self, t):
+        return t >= self.total_time()
 
 
 if __name__ == "__main__":
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     profile.calculate(0, initial_state, goal_state)
 
     # Calculate total time for the profile
-    total_time = profile.totalTime()
+    total_time = profile.total_time()
 
     # Simulate the profile
     dt = 0.01
