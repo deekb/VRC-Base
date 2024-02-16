@@ -95,7 +95,7 @@ class Drivetrain:
         while self._inertial.is_calibrating():
             wait(5, MSEC)
 
-    def move_to_position(self, target_position, speed: float) -> None:
+    def move_to_position(self, target_position, speed: float):
         """
         Move to the specified position
 
@@ -182,7 +182,29 @@ class Drivetrain:
 
         self.move_towards_direction_for_distance(movement_direction, distance_cm, speed)
 
-    def move(self, direction, speed, spin) -> None:
+    @staticmethod
+    def desaturate_wheel_speeds(front_left, front_right, back_left, back_right):
+        maximum_power = max(
+            front_left,
+            front_right,
+            back_left,
+            back_right,
+        )
+
+        if maximum_power > 1:
+            # At least one of the motor velocities are over the maximum possible velocity
+            # This will result in clipping, meaning that the motor speeds will be "clipped" off to the maximum (1)
+            # We will lose some control of our turning while we are moving quickly
+            # To solve this issue we can detect if any motor velocities exceed the maximum possible velocity and
+            # Use the inverse of the maximum motor power as a scalar by dividing by it.
+            # This will always output all values in a range from 0-1
+            front_left /= maximum_power
+            front_right /= maximum_power
+            back_left /= maximum_power
+            back_right /= maximum_power
+        return front_left, front_right, back_left, back_right
+
+    def move(self, direction, speed, spin):
         spin += self._rotation_PID_output
 
         speed = clamp(speed, 0, 1)  # This will ensure that speed is between 0 and 1
@@ -201,36 +223,24 @@ class Drivetrain:
             direction, speed, self._rear_right_wheel_rotation_rad
         ) + (spin if Constants.rear_right_motor_inverted else -spin)
 
-        maximum_power = max(
+        front_left, front_right, back_left, back_right = self.desaturate_wheel_speeds(
             target_front_left_wheel_speed,
             target_front_right_wheel_speed,
             target_rear_left_wheel_speed,
             target_rear_right_wheel_speed,
         )
 
-        if maximum_power > 1:
-            # At least one of the motor velocities are over the maximum possible velocity
-            # This will result in clipping, meaning that the motor speeds will be "clipped" off to the maximum (1)
-            # We will lose some control of our turning while we are moving quickly
-            # To solve this issue we can detect if any motor velocities exceed the maximum possible velocity and
-            # Use the inverse of the maximum motor power as a scalar by dividing by it.
-            # This will always output all values in a range from 0-1
-            target_front_left_wheel_speed /= maximum_power
-            target_front_right_wheel_speed /= maximum_power
-            target_rear_left_wheel_speed /= maximum_power
-            target_rear_right_wheel_speed /= maximum_power
-
         self._front_left_motor.set_velocity(
-            target_front_left_wheel_speed * 142.8, PERCENT
+            front_left * 142.8, PERCENT
         )
         self._front_right_motor.set_velocity(
-            target_front_right_wheel_speed * 142.8, PERCENT
+            front_left * 142.8, PERCENT
         )
         self._rear_left_motor.set_velocity(
-            target_rear_left_wheel_speed * 142.8, PERCENT
+            back_left * 142.8, PERCENT
         )
         self._rear_right_motor.set_velocity(
-            target_rear_right_wheel_speed * 142.8, PERCENT
+            back_right * 142.8, PERCENT
         )
 
     def move_headless(self, direction, magnitude, spin):
@@ -289,7 +299,7 @@ class Drivetrain:
     def clear_direction_PID_output(self):
         self._rotation_PID_output = 0
 
-    def reset(self) -> None:
+    def reset(self):
         """
         Reset all the drivetrain to its newly instantiated state
         """
@@ -324,7 +334,7 @@ class Drivetrain:
         return self._current_target_x_cm, self._current_target_y_cm
 
     @target_position.setter
-    def target_position(self, position) -> None:
+    def target_position(self, position):
         """
         Set the target position of the robot, useful after calibration to set it to a specific position without modifying heading
 
@@ -364,7 +374,7 @@ class Drivetrain:
         return self.rotation_PID.setpoint
 
     @target_heading_rad.setter
-    def target_heading_rad(self, heading) -> None:
+    def target_heading_rad(self, heading):
         """
         Set the current target heading in radians
 
