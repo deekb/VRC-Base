@@ -2,7 +2,6 @@ from HolonomicOdometry import Odometry
 import Constants
 import math
 from Utilities import *
-import TrapezoidMovement
 from PIDController import PIDController
 from vex import *
 
@@ -138,97 +137,6 @@ class Drivetrain:
             self.move_headless(direction_rad, speed, 0)
         self.stop()
 
-    def move_to_position_trap(
-        self, target_position, speed: float, acceleration_time, deceleration_time
-    ) -> None:
-        """
-        Move to the specified position using a trapezoidal movement profile
-
-
-        Args:
-            target_position (tuple[float, float]): The position to mave to
-            speed (float): The speed (0-1) for the move
-            acceleration_time (float): The time to take for acceleration in seconds
-            deceleration_time (float): The time to take for deceleration in seconds
-        """
-        # Ensure the drivetrain doesn't jerk when we start the move
-        self.clear_direction_PID_output()
-        self.stop()
-
-        distance_remaining_pid = PIDController(self.timer, kp=0.01)
-
-        # Set the target_x and target_y from the target position
-        self._current_target_x_cm, self._current_target_y_cm = target_position
-
-        distance_remaining = hypotenuse(
-            self._current_target_y_cm - self._odometry.y,
-            self._current_target_x_cm - self._odometry.x,
-        )
-
-        distance_remaining_pid.setpoint = distance_remaining
-
-        movement_constraints = TrapezoidMovement.Constraints(1, 0.2)
-
-        initial_state = TrapezoidMovement.State(distance_remaining, 0)
-        goal_state = TrapezoidMovement.State(0, 0)
-
-        movement_profile = TrapezoidMovement.TrapezoidProfile(movement_constraints)
-
-        start_time = self.timer.time(SECONDS)
-
-        # While the distance between our current position and our target position is greater than tha allowed movement error
-        # continuously calculate the direction we need to travel to reach the target and the remaining distance
-        while distance_remaining > self._movement_allowed_error:
-            current_time = self.timer.time(SECONDS)
-            elapsed_time = current_time - start_time
-
-            # Calculate the direction to move in the reach the target
-            direction_rad = math.atan2(
-                self._current_target_y_cm - self._odometry.y,
-                self._current_target_x_cm - self._odometry.x,
-            )
-
-            # calculate the remaining distance to move
-            distance_remaining = hypotenuse(
-                self._current_target_x_cm - self._odometry.x,
-                self._current_target_y_cm - self._odometry.y,
-            )
-
-            # Update the rotation PID to keep us facing the same direction throughout the move
-            self.update_direction_PID()
-
-            target_state = movement_profile.calculate(
-                elapsed_time, initial_state, goal_state
-            )
-
-            # Get our target speed from the movement profile
-            distance_remaining_pid.setpoint = target_state.position
-
-            speed = distance_remaining_pid.update(-distance_remaining)
-
-            self.print("distance_remaining: " + str(distance_remaining))
-            self.print(
-                "distance_remaining_pid.setpoint: "
-                + str(distance_remaining_pid.setpoint)
-            )
-            self.print("distance_remaining_pid output: " + str(speed))
-            self.print("target_state: " + str(target_state))
-            self.print("target_state.position: " + str(target_state.position))
-            self.print("target_state.velocity: " + str(target_state.velocity))
-            self.print("elapsed_time: " + str(elapsed_time))
-            self.print(
-                "movement_profile.isFinished: "
-                + str(movement_profile.is_finished(elapsed_time))
-            )
-
-            if movement_profile.is_finished(elapsed_time):
-                # We have overshot
-                break
-
-            self.move_headless(direction_rad, speed, 0)
-            wait(50, MSEC)
-        self.stop()
-
     def follow_path(self, point_list, maximum_speed):
         for point in point_list:
             self.turn_to_face_position(point)
@@ -276,9 +184,6 @@ class Drivetrain:
 
     def move(self, direction, speed, spin) -> None:
         spin += self._rotation_PID_output
-        # self.clear()
-        # self.print(spin)
-        # self.print(self._rotation_PID_output)
 
         speed = clamp(speed, 0, 1)  # This will ensure that speed is between 0 and 1
         spin = clamp(spin, -1, 1)  # This will ensure that spin is between -1 and 1
@@ -309,7 +214,7 @@ class Drivetrain:
             # We will lose some control of our turning while we are moving quickly
             # To solve this issue we can detect if any motor velocities exceed the maximum possible velocity and
             # Use the inverse of the maximum motor power as a scalar by dividing by it.
-            # This wil always output all values in a range from 0-1
+            # This will always output all values in a range from 0-1
             target_front_left_wheel_speed /= maximum_power
             target_front_right_wheel_speed /= maximum_power
             target_rear_left_wheel_speed /= maximum_power

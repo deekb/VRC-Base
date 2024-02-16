@@ -326,13 +326,6 @@ class Robot:
                 wait(10, MSEC)
                 setup_ui.tick()
 
-            self.brain.screen.set_fill_color(Color.TRANSPARENT)
-
-            self.brain.screen.set_pen_color(Color.WHITE)
-            self.print("Team: " + str(setup_ui.team))
-            self.print("Position: " + str(setup_ui.robot_position))
-            wait(1000, MSEC)
-
             if setup_ui.team == Constants.Team.skills:
                 self.autonomous_task = SkillsAutonomous
             else:
