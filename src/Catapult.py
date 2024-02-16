@@ -3,9 +3,12 @@ from vex import *
 
 
 class Catapult:
-    def __init__(self, catapult_motor: Motor, timer):
-        self.catapult_motor = catapult_motor
-        self.timer = timer
+    def __init__(self):
+        self.catapult_motor = Motor(
+            Constants.catapult_motor_port,
+            Constants.catapult_motor_gear_ratio,
+            Constants.catapult_motor_inverted,
+        )
         self.catapult_motor.set_velocity(0, PERCENT)
         self.catapult_motor.spin(FORWARD)
         self.firing = False
@@ -16,7 +19,6 @@ class Catapult:
     def start_firing(self):
         self.firing = True
         self.speed = Constants.catapult_motor_speed
-        self.fire_start_time = self.timer.time(SECONDS)
 
     def set_velocity(self, velocity):
         self.speed = velocity
@@ -31,7 +33,6 @@ class Catapult:
     def update(self):
         while True:
             if self.firing:
-                # if (self.timer.time(SECONDS) - self.fire_start_time) >
                 self.catapult_motor.set_velocity(
                     Constants.catapult_motor_speed, PERCENT
                 )

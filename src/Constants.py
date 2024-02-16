@@ -68,7 +68,7 @@ inertial_sensor_port = Ports.PORT5
 catapult_motor_port = Ports.PORT14
 catapult_motor_gear_ratio = GearSetting.RATIO_36_1
 catapult_motor_inverted = False
-catapult_motor_speed = 60
+catapult_motor_speed = 75
 
 
 """Climber"""

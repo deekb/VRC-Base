@@ -4,8 +4,12 @@ import Constants
 
 
 class Climber:
-    def __init__(self, climber_motor: Motor):
-        self.climber_motor = climber_motor
+    def __init__(self):
+        self.climber_motor = Motor(
+            Constants.climber_motor_port,
+            Constants.climber_motor_gear_ratio,
+            Constants.climber_motor_inverted,
+        )
         self.climber_motor.set_velocity(0, PERCENT)
         self.climber_motor.set_stopping(HOLD)
         self.climber_motor.spin(FORWARD)

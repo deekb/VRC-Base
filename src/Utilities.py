@@ -1,7 +1,14 @@
-from math import isinf, sqrt, cos, sin
+# Standard library imports
 import gc
+from math import cos, isinf, sin, sqrt
+
+# Third-party imports
+from vex import Brain, PERCENT, SECONDS, Thread, wait
+
+# Local or project-specific imports
 from Constants import font_size, log_directory
-from vex import *
+from PIDController import PIDController
+
 
 
 class Terminal:

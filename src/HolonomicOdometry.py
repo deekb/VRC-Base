@@ -1,5 +1,11 @@
-from Utilities import *
+# Standard library imports
 import math
+
+# Third-party imports
+from vex import *
+
+# Local or project-specific imports
+from Utilities import *
 import Constants
 
 

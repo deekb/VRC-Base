@@ -4,6 +4,8 @@ This file goes on the vex brain over a USB cable, the rest of the code can be pu
 
 
 from vex import *
+from Robot import Robot
+
 
 brain = Brain()
 
@@ -17,12 +19,10 @@ brain.screen.clear_screen()
 brain.screen.set_cursor(1, 1)
 
 
-from Robot import Robot
-
 if __name__ == "__main__":
     while True:
         robot = Robot(brain)
         robot.main()
         while not robot.restart_requested:
-            pass
+            wait(500, MSEC)
         del robot

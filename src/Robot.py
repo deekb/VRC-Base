@@ -6,46 +6,45 @@ Project homepage: https://github.com/deekb/VRC-Base
 Project archive: https://github.com/deekb/VRC-Base/archive/master.zip
 Contact Derek.m.baier@gmail.com for more information
 
-The code is developed for Team 3773P, known as Bowbots Phosphorus, and is authored by Derek Baier.
+This codebase is developed for Team 3773P, known as Bowbots Phosphorus, and is authored by Derek Baier.
 
 The project homepage and archive can be found on GitHub at the provided links.
 
 For more information about the project, you can contact Derek Baier at the given email address.
 """
 
-__title__ = "Vex V5 2023 Competition code"
+# Module-level metadata
+__title__ = "Vex V5 2023-2024 Competition code"
 __description__ = "Competition Code for VRC: Over-Under 2023-2024"
 __team__ = "3773P (Bowbots Phosphorus)"
-__url__ = "https://github.com/deekb/VRC-OverUnder"
-__download_url__ = "https://github.com/deekb/VRC-OverUnder/archive/master.zip"
+__url__ = "https://github.com/deekb/VRC-Base"
+__download_url__ = "https://github.com/deekb/VRC-Base/archive/master.zip"
 __version__ = "Working"
 __author__ = "Derek Baier"
 __author_email__ = "Derek.m.baier@gmail.com"
 __license__ = "MIT"
 
+# Standard library imports
 import math
 
-import Constants
-from Autonomous import NothingAutonomous, WinPointAutonomous, ScoringAutonomous4
-from OldAutonomous import SkillsAutonomous
+# Third-party imports
+from vex import *
 
-# from Autonomous import (
-#     ScoringAutonomous,
-#     NothingAutonomous,
-#     SkillsAutonomous,
-#     WinPointAutonomous,
-#     TestAuto,
-# )
+# Local or project-specific imports
+from Autonomous import (
+    NothingAutonomous,
+    WinPointAutonomous,
+    ScoringAutonomous4,
+    SkillsAutonomous,
+)
 from Catapult import Catapult
 from Climber import Climber
 from HolonomicDrivetrain import Drivetrain
 from PneumaticWings import Wings
 from RollerIntake import Intake
 from SetupUI import SetupUI
+import Constants
 from Utilities import *
-from vex import *
-
-brain = Brain()
 
 
 class Robot:
@@ -54,54 +53,44 @@ class Robot:
     """
 
     def __init__(self, brain):
+        # Brain and Terminal-related variables
         self.brain = brain
         self.terminal = Terminal(self.brain)
         self.print = self.terminal.print
         self.clear = self.terminal.clear
 
-        self.drivetrain_position_log = Logging(log_name="Drivetrain_Position")
-
+        # Controllers
         self.primary_controller = Controller(PRIMARY)
         self.secondary_controller = Controller(PARTNER)
 
+        # Robot Subsystems
+        self.intake = Intake()
+        self.climber = Climber()
+        self.wings = Wings()
+        self.catapult = Catapult()
+        self.drivetrain = Drivetrain(timer=self.brain.timer, terminal=self.terminal)
+
+        # Threads and Flags
         self.driver_control_threads = []
         self.autonomous_threads = []
         self.setup_complete = False
-
+        self.started_skills_driver_assist_maneuver = False
         self.disable_driver_control = False
+        self.driver_control_start_time = 0
 
+        # Autonomous
         self.autonomous_task = NothingAutonomous
         self.autonomous_startup_position = (0, 0)
 
-        self.drivetrain = Drivetrain(timer=self.brain.timer, terminal=self.terminal)
-
-        self.driver_control_start_time = 0
-
-        self.intake = Intake()
-
-        self.wings = Wings()
+        # States for Handling Toggle Controls
         self.wings_toggled_last_tick = False
-
-        self.catapult_motor = Motor(
-            Constants.catapult_motor_port,
-            Constants.catapult_motor_gear_ratio,
-            Constants.catapult_motor_inverted,
-        )
-        self.catapult_motor.set_stopping(HOLD)
-        self.catapult = Catapult(self.catapult_motor, brain.timer)
         self.catapult_toggled_last_tick = False
 
-        self.climber_motor = Motor(
-            Constants.climber_motor_port,
-            Constants.climber_motor_gear_ratio,
-            Constants.climber_motor_inverted,
-        )
-
-        self.climber = Climber(self.climber_motor)
-
+        # Configuration Settings
+        self.catapult.catapult_motor.set_stopping(HOLD)
         self.drivetrain.set_braking(Constants.drivetrain_braking)
 
-        # Register the competition handler
+        # Competition State Handling
         self.competition = Competition(self.driver_handler, self.autonomous_handler)
 
     def on_autonomous(self):
@@ -110,11 +99,11 @@ class Robot:
         """
         # Ensure setup is complete
         if not self.setup_complete:
-            print("[on_autonomous]: setup not complete, can't start autonomous")
-            return
+            raise RuntimeError("Setup not complete, unable to start autonomous")
         autonomous_log_object = Logging(log_name="Autonomous")
 
-        self.autonomous_task(self, autonomous_log_object).run()
+        autonomous = self.autonomous_task(self, autonomous_log_object)
+        autonomous.run()
 
     def on_driver_control(self):
         """
@@ -123,7 +112,7 @@ class Robot:
         # Wait for setup to finish
         while not self.setup_complete:
             wait(5)
-        self.drivetrain.set_braking(False)
+        self.drivetrain.set_braking(Constants.drivetrain_braking)
 
         self.driver_control_start_time = self.brain.timer.time(SECONDS)
         self.wings.wings_in()
@@ -131,34 +120,33 @@ class Robot:
         while True:
             if not self.disable_driver_control:
                 # The joysticks report outputs in the range -100 to 100, but it is easier to do math on inputs in the range
-                # 0 to 1, so we multiply the inputs by 0.01 (same as dividing by 100 but slightly more computationally efficient)
+                # -1 to 1, so we scale them to -1 to 1
                 left_stick = (
-                    clamp(self.primary_controller.axis4.position() * 0.01, -1, 1),
-                    clamp(self.primary_controller.axis3.position() * 0.01, -1, 1),
+                    clamp(self.primary_controller.axis4.position() / 100, -1, 1),
+                    clamp(self.primary_controller.axis3.position() / 100, -1, 1),
                 )
                 right_stick = (
-                    clamp(self.primary_controller.axis1.position() * 0.01, -1, 1),
-                    clamp(self.primary_controller.axis1.position() * 0.01, -1, 1),
+                    clamp(self.primary_controller.axis1.position() / 100, -1, 1),
+                    clamp(self.primary_controller.axis1.position() / 100, -1, 1),
                 )
 
                 left_stick = (
                     apply_deadzone(left_stick[0], Constants.movement_deadzone, 1),
                     apply_deadzone(left_stick[1], Constants.movement_deadzone, 1),
                 )
-
-                movement_direction = math.atan2(left_stick[1], left_stick[0])
-
-                movement_speed = hypotenuse(left_stick[0], left_stick[1])
-
-                # Apply a deadzone to the turning amount
-                deadzoned_right_x = apply_deadzone(
-                    right_stick[0], Constants.turn_deadzone, 1
+                right_stick = (
+                    apply_deadzone(right_stick[0], Constants.turn_deadzone, 1),
+                    apply_deadzone(right_stick[1], Constants.turn_deadzone, 1),
                 )
 
                 # Normalize the turning amount across a cubic curve
                 normalized_right_x = cubic_filter(
-                    deadzoned_right_x, Constants.turn_cubic_linearity
+                    right_stick[0], Constants.turn_cubic_linearity
                 )
+
+                movement_direction = math.atan2(left_stick[1], left_stick[0])
+
+                movement_speed = hypotenuse(left_stick[0], left_stick[1])
 
                 if Constants.headless_mode:
                     self.drivetrain.move_headless(
@@ -177,6 +165,17 @@ class Robot:
                     self.intake.stop()
 
                 if self.autonomous_task is SkillsAutonomous:
+                    # Driver-skills-specific controller bindings
+
+                    if (
+                        self.primary_controller.buttonA.pressing()
+                        and not self.started_skills_driver_assist_maneuver
+                    ):
+                        self.started_skills_driver_assist_maneuver = True
+                        autonomous_log_object = Logging(log_name="Temp Autonomous")
+                        temp_autonomous = SkillsAutonomous(self, autonomous_log_object)
+                        temp_autonomous.first_segment()
+
                     if self.primary_controller.buttonB.pressing():
                         if not self.catapult_toggled_last_tick:
                             self.catapult.firing = not self.catapult.firing
@@ -185,6 +184,7 @@ class Robot:
                     else:
                         self.catapult_toggled_last_tick = False
                 else:
+                    # Competition-specific controller bindings
                     if self.primary_controller.buttonB.pressing():
                         self.catapult.start_firing()
                         self.catapult.set_velocity(50)
@@ -334,12 +334,12 @@ class Robot:
             wait(1000, MSEC)
 
             if setup_ui.team == Constants.Team.skills:
-                self.autonomous_task = WinPointAutonomous
+                self.autonomous_task = SkillsAutonomous
             else:
                 if setup_ui.robot_position == Constants.defensive | Constants.red:
-                    self.autonomous_task = ScoringAutonomous4
+                    self.autonomous_task = WinPointAutonomous
                 elif setup_ui.robot_position == Constants.defensive | Constants.blue:
-                    self.autonomous_task = ScoringAutonomous4
+                    self.autonomous_task = WinPointAutonomous
                 elif setup_ui.robot_position == Constants.offensive | Constants.red:
                     self.autonomous_task = ScoringAutonomous4
                 elif setup_ui.robot_position == Constants.offensive | Constants.blue:
@@ -349,7 +349,6 @@ class Robot:
         self.brain.screen.set_pen_color(Color.WHITE)
 
         self.drivetrain.calibrate_inertial_sensor()
-        # self.climber.calibrate()
 
         # Ensure you set the direction of the robot after the inertial sensor is calibrated or calibrating will wipe your setting
         self.drivetrain.current_position = Constants.robot_start_position

@@ -4,6 +4,7 @@ import math
 from Utilities import *
 import TrapezoidMovement
 from PIDController import PIDController
+from vex import *
 
 x_axis = Constants.ControllerAxis.x_axis
 y_axis = Constants.ControllerAxis.y_axis
